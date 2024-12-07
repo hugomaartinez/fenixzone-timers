@@ -74,15 +74,17 @@ export default function Timer({ title, cityName }: TimerProps) {
       <CardFooter className="justify-center space-x-2">
         <Button onClick={handleStart} disabled={isRunning}>
           <PlayIcon className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="hidden lg:inline-block ml-2">Iniciar</span>
+          <span className="hidden min-[1280px]:inline-block ml-2">Iniciar</span>
         </Button>
         <Button onClick={handleStop} disabled={!isRunning}>
           <StopIcon className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="hidden lg:inline-block ml-2">Parar</span>
+          <span className="hidden min-[1280px]:inline-block ml-2">Parar</span>
         </Button>
         <Button onClick={handleReset} variant="outline">
           <RotateCcwIcon className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="hidden lg:inline-block ml-2">Reiniciar</span>
+          <span className="hidden min-[1280px]:inline-block ml-2">
+            Reiniciar
+          </span>
         </Button>
       </CardFooter>
     </Card>
