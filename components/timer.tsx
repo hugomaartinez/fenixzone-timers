@@ -36,7 +36,7 @@ export default function Timer({ title, cityName }: TimerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio("/alert.mp3");
+    audioRef.current = new Audio("/notification_sound.wav");
   }, []);
 
   useEffect(() => {
