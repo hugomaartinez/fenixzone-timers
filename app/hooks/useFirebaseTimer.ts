@@ -34,7 +34,7 @@ export function useFirebaseTimer(cityName: string, timerName: string) {
     if (timerData.isRunning && timerData.startTime) {
       interval = setInterval(() => {
         const elapsedTime = Math.floor(
-          (Date.now() - timerData?.startTime) / 1000
+          timerData.startTime ? (Date.now() - timerData.startTime) / 1000 : 0
         );
         updateTimerData({ time: elapsedTime });
       }, 1000);
@@ -53,6 +53,7 @@ export function useFirebaseTimer(cityName: string, timerName: string) {
     // Filtrar valores undefined
     const sanitizedData = Object.fromEntries(
       Object.entries({ ...timerData, ...newData }).filter(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ([_, value]) => value !== undefined
       )
     );
@@ -70,7 +71,7 @@ export function useFirebaseTimer(cityName: string, timerName: string) {
     updateTimerData({ isRunning: false });
 
     // También detener el intervalo localmente si es necesario
-    clearInterval(interval);
+    //clearInterval(interval);
   };
 
   const handleReset = () =>
