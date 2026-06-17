@@ -61,7 +61,11 @@ export default function Transportista({ groupId }: TransportistaProps) {
   }, []);
 
   const agentOnline = status?.lastSeenAt ? now - status.lastSeenAt < 45000 : false;
-  const remainingMs = nextCallAt ? nextCallAt - now : fallbackIntervalMs;
+  const estimatedNextCallAt =
+    lastEvent && nextCallAt
+      ? nextCallAt + Math.max(0, Math.ceil((now - nextCallAt) / averageIntervalMs)) * averageIntervalMs
+      : null;
+  const remainingMs = estimatedNextCallAt ? estimatedNextCallAt - now : fallbackIntervalMs;
   const recentEvents = [...events].reverse().slice(0, 6);
 
   return (
@@ -105,8 +109,15 @@ export default function Transportista({ groupId }: TransportistaProps) {
               Proxima llamada
             </div>
             <p className="font-mono text-2xl font-bold tabular-nums">
-              {nextCallAt ? formatDuration(remainingMs) : formatDuration(fallbackIntervalMs)}
+              {estimatedNextCallAt
+                ? formatDuration(remainingMs)
+                : formatDuration(fallbackIntervalMs)}
             </p>
+            {lastEvent && estimatedNextCallAt && estimatedNextCallAt !== nextCallAt ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Estimacion continua
+              </p>
+            ) : null}
           </div>
           <div className="rounded-lg border border-white/10 bg-background p-4">
             <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">

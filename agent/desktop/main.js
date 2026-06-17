@@ -120,6 +120,7 @@ function createWindow() {
   window = new BrowserWindow({
     height: 680,
     show: false,
+    skipTaskbar: true,
     title: "Transportista Agent",
     webPreferences: {
       contextIsolation: true,
@@ -134,6 +135,10 @@ function createWindow() {
       event.preventDefault();
       window.hide();
     }
+  });
+  window.on("minimize", (event) => {
+    event.preventDefault();
+    window.hide();
   });
 }
 

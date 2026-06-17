@@ -87,7 +87,7 @@ function normalizeLine(line) {
 function isTransportistaCall(line) {
   const normalizedLine = normalizeLine(line);
   return (
-    normalizedLine.includes("llamando por telefono") &&
+    normalizedLine.includes("llamando") &&
     normalizedLine.includes("4825")
   );
 }
