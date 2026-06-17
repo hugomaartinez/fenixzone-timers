@@ -21,9 +21,10 @@ import { useFirebaseTimer } from "@/app/hooks/useFirebaseTimer";
 interface TimerProps {
   title: string;
   cityName: string;
+  groupId: string;
 }
 
-export default function Timer({ title, cityName }: TimerProps) {
+export default function Timer({ title, cityName, groupId }: TimerProps) {
   const {
     time,
     isRunning,
@@ -32,7 +33,7 @@ export default function Timer({ title, cityName }: TimerProps) {
     handleStop,
     handleReset,
     toggleAlert,
-  } = useFirebaseTimer(cityName, title);
+  } = useFirebaseTimer(groupId, cityName, title);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {

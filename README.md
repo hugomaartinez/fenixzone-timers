@@ -1,5 +1,23 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Firebase
+
+The app uses Firebase Auth with email/password accounts and Realtime Database groups.
+
+Required setup:
+
+- Enable **Authentication > Sign-in method > Email/Password** in Firebase.
+- Keep the existing `NEXT_PUBLIC_FIREBASE_*` variables in `.env`.
+- Publish `database.rules.json` to Realtime Database rules.
+
+Shared timers are stored under:
+
+```text
+groups/{groupId}/timers/{cityName}/{timerName}
+```
+
+Users can create a group, copy the invitation link, and another logged-in user can join with `?invite={groupId}`.
+
 ## Getting Started
 
 First, run the development server:

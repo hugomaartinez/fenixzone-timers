@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ref, onValue, set } from "firebase/database";
 import { database } from "../firebase";
 
@@ -9,24 +9,46 @@ interface TimerData {
   startTime?: number; // Marca de tiempo (timestamp) cuando se inició
 }
 
-export function useFirebaseTimer(cityName: string, timerName: string) {
-  const [timerData, setTimerData] = useState<TimerData>({
-    time: 0,
-    isRunning: false,
-    alertEnabled: false,
-  });
+const defaultTimerData: TimerData = {
+  time: 0,
+  isRunning: false,
+  alertEnabled: false,
+};
+
+export function useFirebaseTimer(groupId: string, cityName: string, timerName: string) {
+  const [timerData, setTimerData] = useState<TimerData>(defaultTimerData);
+  const timerDataRef = useRef(timerData);
 
   useEffect(() => {
-    const timerRef = ref(database, `timers/${cityName}/${timerName}`);
+    timerDataRef.current = timerData;
+  }, [timerData]);
+
+  useEffect(() => {
+    const timerRef = ref(database, `groups/${groupId}/timers/${cityName}/${timerName}`);
     const unsubscribe = onValue(timerRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        setTimerData(data);
-      }
+      setTimerData(data ?? defaultTimerData);
     });
 
     return () => unsubscribe();
-  }, [cityName, timerName]);
+  }, [groupId, cityName, timerName]);
+
+  const updateTimerData = useCallback(
+    (newData: Partial<TimerData>) => {
+      const timerRef = ref(database, `groups/${groupId}/timers/${cityName}/${timerName}`);
+
+      // Filtrar valores undefined
+      const sanitizedData = Object.fromEntries(
+        Object.entries({ ...timerDataRef.current, ...newData }).filter(
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          ([_, value]) => value !== undefined
+        )
+      );
+
+      set(timerRef, sanitizedData);
+    },
+    [groupId, cityName, timerName]
+  );
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -45,21 +67,7 @@ export function useFirebaseTimer(cityName: string, timerName: string) {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [timerData.isRunning, timerData.startTime]);
-
-  const updateTimerData = (newData: Partial<TimerData>) => {
-    const timerRef = ref(database, `timers/${cityName}/${timerName}`);
-
-    // Filtrar valores undefined
-    const sanitizedData = Object.fromEntries(
-      Object.entries({ ...timerData, ...newData }).filter(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ([_, value]) => value !== undefined
-      )
-    );
-
-    set(timerRef, sanitizedData);
-  };
+  }, [timerData.isRunning, timerData.startTime, updateTimerData]);
 
   const handleStart = () => {
     const startTime = Date.now() - timerData.time * 1000; // Ajustar el inicio según el tiempo ya transcurrido
