@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
+  CheckCircle2Icon,
   ChevronDownIcon,
   CopyIcon,
   Gamepad2Icon,
@@ -41,6 +42,16 @@ export default function GroupToolbar({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!feedback) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setFeedback(null), 2600);
+
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
+
   const inviteLink = useMemo(() => {
     if (!activeGroup || typeof window === "undefined") {
       return "";
@@ -71,8 +82,12 @@ export default function GroupToolbar({
       return;
     }
 
-    await navigator.clipboard.writeText(inviteLink);
-    setFeedback("Enlace copiado.");
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setFeedback("Enlace copiado correctamente.");
+    } catch {
+      setFeedback("No se pudo copiar el enlace.");
+    }
   };
 
   return (
@@ -145,12 +160,16 @@ export default function GroupToolbar({
             </Button>
           </div>
         </div>
-        {feedback ? (
-          <div className="mx-auto max-w-6xl px-4 pb-3 text-sm text-muted-foreground">
-            {feedback}
-          </div>
-        ) : null}
       </header>
+
+      {feedback ? (
+        <div className="fixed right-4 top-20 z-50 flex max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200 sm:right-6">
+          <div className="flex items-center gap-3 rounded-lg border border-teal-300/25 bg-zinc-950/95 px-4 py-3 text-sm font-medium text-zinc-50 shadow-2xl shadow-black/40 backdrop-blur">
+            <CheckCircle2Icon className="h-5 w-5 shrink-0 text-teal-300" />
+            <span>{feedback}</span>
+          </div>
+        </div>
+      ) : null}
 
       {isCreateOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
