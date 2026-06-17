@@ -20,17 +20,31 @@
         margin: 0;
         min-height: 100vh;
         background:
-          radial-gradient(circle at top left, rgba(20, 184, 166, 0.16), transparent 34%),
-          #0d1115;
+          radial-gradient(circle at top left, rgba(20, 184, 166, 0.15), transparent 32%),
+          linear-gradient(180deg, #0d1115, #0a0d10);
       }
 
       main {
-        padding: 18px;
+        display: grid;
+        gap: 16px;
+        padding: 22px;
+      }
+
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
       }
 
       h1 {
         font-size: 22px;
         margin: 0 0 4px;
+      }
+
+      h2 {
+        font-size: 16px;
+        margin: 0;
       }
 
       p {
@@ -40,10 +54,10 @@
         margin: 0;
       }
 
-      form {
+      form,
+      .stack {
         display: grid;
         gap: 12px;
-        margin-top: 18px;
       }
 
       label {
@@ -53,18 +67,7 @@
         font-weight: 700;
       }
 
-      input {
-        width: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 7px;
-        background: #10161c;
-        color: #f5f5f5;
-        font-size: 14px;
-        height: 38px;
-        padding: 0 11px;
-        outline: none;
-      }
-
+      input,
       select {
         width: 100%;
         border: 1px solid rgba(255, 255, 255, 0.12);
@@ -82,30 +85,41 @@
         border-color: rgba(20, 184, 166, 0.75);
       }
 
-      .row {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: 1fr auto;
-      }
-
       .panel {
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.035);
-        padding: 14px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 16px;
       }
 
-      .status {
-        align-items: center;
+      .hidden {
+        display: none !important;
+      }
+
+      .status-row {
         display: flex;
+        align-items: center;
         justify-content: space-between;
-        margin-top: 14px;
+        gap: 12px;
+      }
+
+      .account {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .account strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .badge {
         border-radius: 999px;
         background: rgba(115, 115, 115, 0.16);
         color: #d4d4d4;
+        flex: 0 0 auto;
         font-size: 12px;
         font-weight: 700;
         padding: 6px 10px;
@@ -116,10 +130,16 @@
         color: #5eead4;
       }
 
+      .row {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr auto;
+      }
+
       .actions {
-        display: flex;
+        display: grid;
         gap: 8px;
-        margin-top: 16px;
+        grid-template-columns: 1fr 1fr;
       }
 
       button {
@@ -144,17 +164,39 @@
         color: #fff;
       }
 
+      button.ghost {
+        background: transparent;
+        color: #d4d4d4;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .path {
+        overflow-wrap: anywhere;
+      }
+
+      .error {
+        border-radius: 7px;
+        background: rgba(127, 29, 29, 0.22);
+        color: #fecaca;
+        font-size: 12px;
+        line-height: 1.35;
+        padding: 9px;
+      }
+
       #log {
         display: grid;
         gap: 7px;
-        margin-top: 14px;
-        max-height: 110px;
+        max-height: 116px;
         overflow: auto;
       }
 
       .log-line {
         border-radius: 6px;
-        background: rgba(0, 0, 0, 0.2);
+        background: rgba(0, 0, 0, 0.22);
         color: #d4d4d4;
         font-size: 12px;
         padding: 8px;
@@ -164,67 +206,71 @@
   <body>
     <main>
       <header>
-        <h1>Transportista Agent</h1>
-        <p>Lee el chatlog de SAMP y envia llamadas validas a tu grupo.</p>
+        <div>
+          <h1>Transportista Agent</h1>
+          <p>Lee el chatlog de SAMP y envia llamadas validas a tu grupo.</p>
+        </div>
+        <span id="state" class="badge">Parado</span>
       </header>
 
-      <div class="status">
-        <span id="state" class="badge">Parado</span>
-        <p id="path">Buscando chatlog...</p>
-      </div>
+      <section id="login-view" class="panel">
+        <form id="login-form">
+          <div>
+            <h2>Iniciar sesion</h2>
+            <p>Usa la misma cuenta que en la web.</p>
+          </div>
+          <label>
+            Email
+            <input id="email" autocomplete="email" />
+          </label>
+          <label>
+            Password
+            <input id="password" autocomplete="current-password" type="password" />
+          </label>
+          <p id="login-error" class="error hidden"></p>
+          <button id="login" type="submit">Entrar</button>
+        </form>
+      </section>
 
-      <form id="config-form" class="panel">
-        <label>
-          Nombre del equipo
-          <input id="agentName" autocomplete="off" />
-        </label>
-        <label>
-          Email
-          <input id="email" autocomplete="email" />
-        </label>
-        <label>
-          Password
-          <input id="password" autocomplete="current-password" type="password" />
-        </label>
-        <div class="row">
-          <label>
-            Grupo
-            <select id="groupId">
-              <option value="">Carga tus grupos</option>
-            </select>
-          </label>
-          <button id="load-groups" class="secondary" type="button">Cargar</button>
+      <section id="app-view" class="stack hidden">
+        <div class="panel status-row">
+          <div class="account">
+            <p>Conectado como</p>
+            <strong id="account-email">-</strong>
+          </div>
+          <button id="change-account" class="ghost" type="button">Cambiar</button>
         </div>
-        <div class="row">
-          <label>
-            Chatlog
-            <input id="chatlogPath" placeholder="Automatico si lo dejas vacio" />
-          </label>
-          <button id="pick-chatlog" class="secondary" type="button">Buscar</button>
-        </div>
-        <details>
-          <summary>Avanzado</summary>
-          <label>
-            ID del grupo manual
-            <input id="manualGroupId" autocomplete="off" />
-          </label>
-          <label>
-            Firebase API key
-            <input id="apiKey" autocomplete="off" />
-          </label>
-          <label>
-            Firebase Database URL
-            <input id="databaseURL" autocomplete="off" />
-          </label>
-        </details>
-        <div class="actions">
-          <button type="submit">Guardar</button>
-          <button id="start" type="button">Iniciar</button>
-          <button id="stop" class="danger" type="button">Parar</button>
-        </div>
-      </form>
 
-      <section id="log"></section>
+        <form id="config-form" class="panel">
+          <label>
+            Nombre del equipo
+            <input id="agentName" autocomplete="off" />
+          </label>
+          <div class="row">
+            <label>
+              Grupo
+              <select id="groupId">
+                <option value="">Cargando grupos...</option>
+              </select>
+            </label>
+            <button id="load-groups" class="secondary" type="button">Actualizar</button>
+          </div>
+          <div class="row">
+            <label>
+              Chatlog
+              <input id="chatlogPath" placeholder="Automatico si lo dejas vacio" />
+            </label>
+            <button id="pick-chatlog" class="secondary" type="button">Buscar</button>
+          </div>
+          <p id="path" class="path">Buscando chatlog...</p>
+          <div class="actions">
+            <button id="start" type="button">Iniciar</button>
+            <button id="stop" class="danger" type="button">Parar</button>
+          </div>
+        </form>
+
+        <section id="log"></section>
+      </section>
     </main>
 
     <script src="./renderer.js"></script>

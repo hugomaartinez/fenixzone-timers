@@ -92,6 +92,22 @@ function isTransportistaCall(line) {
   );
 }
 
+function parseChatlogTimestamp(line, now = new Date()) {
+  const match = line.match(/^\[(\d{2}):(\d{2}):(\d{2})\]/);
+  if (!match) {
+    return null;
+  }
+
+  const timestamp = new Date(now);
+  timestamp.setHours(Number(match[1]), Number(match[2]), Number(match[3]), 0);
+
+  if (timestamp.getTime() - now.getTime() > 60 * 60 * 1000) {
+    timestamp.setDate(timestamp.getDate() - 1);
+  }
+
+  return timestamp.getTime();
+}
+
 function loadConfig(configPath, envDir = path.join(__dirname, "..")) {
   const localEnv = {
     ...readEnvFile(path.join(envDir, ".env")),
@@ -321,6 +337,8 @@ class TransportistaAgent extends EventEmitter {
     this.lastAcceptedCallAt = calledAt;
     await this.writeStatus({
       lastAcceptedAt: calledAt,
+      lastRejectedAt: null,
+      lastRejectedIntervalMs: null,
       lastRejectedReason: null,
     });
     this.emit("accepted", { calledAt, intervalMs });
@@ -341,18 +359,22 @@ class TransportistaAgent extends EventEmitter {
     }
 
     const settings = this.getSettings();
-    const calledAt = Date.now();
+    const calledAt = parseChatlogTimestamp(line) ?? Date.now();
     const intervalMs = this.lastAcceptedCallAt ? calledAt - this.lastAcceptedCallAt : null;
 
     if (
       intervalMs !== null &&
-      (intervalMs < settings.minIntervalMs || intervalMs > settings.maxIntervalMs)
+      intervalMs < settings.minIntervalMs
     ) {
-      await this.rejectCall(calledAt, intervalMs, "Interval outside realistic range");
+      await this.rejectCall(calledAt, intervalMs, "Interval shorter than realistic range");
       return;
     }
 
-    await this.acceptCall(line, calledAt, intervalMs);
+    await this.acceptCall(
+      line,
+      calledAt,
+      intervalMs !== null && intervalMs <= settings.maxIntervalMs ? intervalMs : null
+    );
   }
 
   async readNewLines() {
@@ -408,6 +430,7 @@ module.exports = {
   isTransportistaCall,
   loadUserGroups,
   loadConfig,
+  parseChatlogTimestamp,
   readJson,
   resolveChatlogPath,
 };

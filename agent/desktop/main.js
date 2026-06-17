@@ -64,8 +64,15 @@ function readConfig() {
 }
 
 function writeConfig(config) {
+  const currentConfig = readConfig();
+  const safeConfig = {
+    ...currentConfig,
+    ...config,
+    firebase: readBundledFirebaseConfig(),
+  };
+
   fs.mkdirSync(path.dirname(getConfigPath()), { recursive: true });
-  fs.writeFileSync(getConfigPath(), `${JSON.stringify(config, null, 2)}\n`);
+  fs.writeFileSync(getConfigPath(), `${JSON.stringify(safeConfig, null, 2)}\n`);
 }
 
 function createTrayIcon(color = "#14b8a6") {
@@ -188,11 +195,12 @@ ipcMain.handle("config:save", (_event, config) => {
 });
 
 ipcMain.handle("auth:groups", async (_event, config) => {
+  const currentConfig = readConfig();
   const nextConfig = {
-    ...readConfig(),
+    ...currentConfig,
     ...config,
-    auth: { ...readConfig().auth, ...config.auth },
-    firebase: { ...readConfig().firebase, ...config.firebase },
+    auth: { ...currentConfig.auth, ...config.auth },
+    firebase: currentConfig.firebase,
   };
 
   const result = await loadUserGroups(
