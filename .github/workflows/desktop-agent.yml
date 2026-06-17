@@ -1,0 +1,51 @@
+name: Build Transportista Agent
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-windows-exe:
+    name: Build Windows executable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Firebase secrets
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{ secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
+        run: |
+          if (-not $env:NEXT_PUBLIC_FIREBASE_API_KEY) {
+            throw "Missing secret NEXT_PUBLIC_FIREBASE_API_KEY"
+          }
+          if (-not $env:NEXT_PUBLIC_FIREBASE_DATABASE_URL) {
+            throw "Missing secret NEXT_PUBLIC_FIREBASE_DATABASE_URL"
+          }
+
+      - name: Build Transportista Agent
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{ secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
+        run: npm run transportista:desktop:build
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Transportista-Agent
+          path: dist/Transportista-Agent.exe
+          if-no-files-found: error
+          retention-days: 30

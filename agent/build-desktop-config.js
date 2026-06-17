@@ -33,6 +33,7 @@ function readEnvFile(filePath) {
 const env = {
   ...readEnvFile(path.join(ROOT_DIR, ".env")),
   ...readEnvFile(path.join(ROOT_DIR, ".env.local")),
+  ...process.env,
 };
 const config = {
   apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
