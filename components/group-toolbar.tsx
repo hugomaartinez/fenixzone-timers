@@ -2,16 +2,18 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import {
+  ChevronDownIcon,
   CopyIcon,
   Gamepad2Icon,
-  ChevronDownIcon,
   LogOutIcon,
   PlusIcon,
   ServerIcon,
+  UserIcon,
   UsersIcon,
+  XIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { GroupSummary } from "@/app/hooks/useGroups";
+import { Button } from "@/components/ui/button";
 
 interface GroupToolbarProps {
   userEmail: string | null;
@@ -36,6 +38,7 @@ export default function GroupToolbar({
 }: GroupToolbarProps) {
   const [groupName, setGroupName] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const inviteLink = useMemo(() => {
@@ -54,6 +57,7 @@ export default function GroupToolbar({
     try {
       await onCreateGroup(groupName);
       setGroupName("");
+      setIsCreateOpen(false);
       setFeedback("Grupo creado.");
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "No se pudo crear el grupo.");
@@ -72,91 +76,132 @@ export default function GroupToolbar({
   };
 
   return (
-    <section className="mb-6 overflow-hidden rounded-lg border border-white/10 bg-card shadow-xl shadow-black/20">
-      <div className="flex flex-col gap-4 border-b border-white/10 bg-white/[0.03] p-4 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-teal-400/10 text-teal-300">
+    <>
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-background/85 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-400/10 text-teal-300">
               <UsersIcon className="h-5 w-5" />
             </span>
-            <div>
-              <h1 className="text-2xl font-bold leading-tight">FenixZone Timers</h1>
-              {activeGroup ? (
-                <p className="text-sm text-muted-foreground">
-                  Grupo activo: <span className="text-foreground">{activeGroup.name}</span>
-                </p>
-              ) : null}
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold leading-tight">FenixZone Timers</h1>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {playerName ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Gamepad2Icon className="h-3.5 w-3.5 text-amber-300" />
+                    {playerName}
+                  </span>
+                ) : null}
+                {server ? (
+                  <span className="inline-flex items-center gap-1">
+                    <ServerIcon className="h-3.5 w-3.5 text-teal-300" />
+                    {server}
+                  </span>
+                ) : null}
+                {userEmail ? (
+                  <span className="inline-flex min-w-0 items-center gap-1">
+                    <UserIcon className="h-3.5 w-3.5" />
+                    <span className="truncate">{userEmail}</span>
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {playerName ? (
-              <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-background px-2.5 py-1.5">
-                <Gamepad2Icon className="h-3.5 w-3.5 text-amber-300" />
-                {playerName}
-              </span>
-            ) : null}
-            {server ? (
-              <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-background px-2.5 py-1.5">
-                <ServerIcon className="h-3.5 w-3.5 text-teal-300" />
-                {server}
-              </span>
-            ) : null}
-          {userEmail ? (
-              <span className="inline-flex items-center rounded-md border border-white/10 bg-background px-2.5 py-1.5">
-                {userEmail}
-              </span>
-          ) : null}
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label className="relative inline-flex min-w-56 items-center">
+              <select
+                className="h-9 w-full appearance-none rounded-md border border-input bg-background px-3 pr-10 text-sm outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring"
+                value={activeGroup?.id ?? ""}
+                onChange={(event) => onSelectGroup(event.target.value)}
+                disabled={groups.length === 0}
+                aria-label="Seleccionar grupo"
+              >
+                {groups.length === 0 ? <option value="">Sin grupos</option> : null}
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
+            </label>
+            <Button type="button" variant="outline" onClick={() => setIsCreateOpen(true)}>
+              <PlusIcon className="h-4 w-4" />
+              Grupo
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCopyInvite}
+              disabled={!activeGroup}
+            >
+              <CopyIcon className="h-4 w-4" />
+              Invitacion
+            </Button>
+            <Button type="button" variant="ghost" onClick={onLogout}>
+              <LogOutIcon className="h-4 w-4" />
+              Salir
+            </Button>
           </div>
         </div>
-        <form className="flex flex-col gap-2 sm:flex-row" onSubmit={handleCreateGroup}>
-          <input
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            type="text"
-            value={groupName}
-            onChange={(event) => setGroupName(event.target.value)}
-            placeholder="Nombre del grupo"
-            required
-          />
-          <Button type="submit" disabled={loading}>
-            <PlusIcon className="h-4 w-4" />
-            Crear grupo
-          </Button>
-        </form>
-      </div>
-      <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="relative inline-flex min-w-48 items-center">
-            <select
-              className="h-9 w-full appearance-none rounded-md border border-input bg-background px-3 pr-10 text-sm outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring"
-              value={activeGroup?.id ?? ""}
-              onChange={(event) => onSelectGroup(event.target.value)}
-              disabled={groups.length === 0}
-            >
-              {groups.length === 0 ? <option value="">Sin grupos</option> : null}
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDownIcon className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
-          </label>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCopyInvite}
-            disabled={!activeGroup}
-          >
-            <CopyIcon className="h-4 w-4" />
-            Copiar invitacion
-          </Button>
-          <Button type="button" variant="ghost" onClick={onLogout}>
-            <LogOutIcon className="h-4 w-4" />
-            Salir
-          </Button>
+        {feedback ? (
+          <div className="mx-auto max-w-6xl px-4 pb-3 text-sm text-muted-foreground">
+            {feedback}
+          </div>
+        ) : null}
+      </header>
+
+      {isCreateOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-lg border border-white/10 bg-card shadow-2xl shadow-black/40">
+            <div className="flex items-center justify-between border-b border-white/10 p-4">
+              <div>
+                <h2 className="text-base font-semibold">Crear grupo</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Elige un nombre para compartir timers.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCreateOpen(false)}
+                aria-label="Cerrar modal"
+              >
+                <XIcon className="h-4 w-4" />
+              </Button>
+            </div>
+            <form className="space-y-4 p-4" onSubmit={handleCreateGroup}>
+              <label className="block space-y-2 text-sm font-medium">
+                <span>Nombre</span>
+                <input
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  type="text"
+                  value={groupName}
+                  onChange={(event) => setGroupName(event.target.value)}
+                  placeholder="Ej: Normal"
+                  autoFocus
+                  required
+                />
+              </label>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setIsCreateOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  <PlusIcon className="h-4 w-4" />
+                  Crear
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
-        {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
-      </div>
-    </section>
+      ) : null}
+    </>
   );
 }

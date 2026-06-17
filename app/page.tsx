@@ -65,7 +65,6 @@ export default function CitiesApp() {
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,_hsl(0_0%_3.9%),_hsl(220_18%_7%)_48%,_hsl(0_0%_3.9%))]">
-      <div className="container mx-auto max-w-6xl p-4">
       <GroupToolbar
         userEmail={user.email}
         playerName={profile?.playerName ?? user.displayName}
@@ -76,6 +75,7 @@ export default function CitiesApp() {
         onCreateGroup={createGroup}
         onLogout={logout}
       />
+      <div className="container mx-auto max-w-6xl p-4">
       {inviteMessage ? (
         <p className="mb-4 rounded-md border border-border bg-card p-3 text-sm">
           {inviteMessage}
@@ -91,7 +91,7 @@ export default function CitiesApp() {
       ) : null}
       {activeGroupId ? (
         <Tabs defaultValue="los-santos">
-          <TabsList className="grid h-auto w-full grid-cols-2 rounded-lg border border-white/10 bg-card p-1 sm:grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 rounded-lg border border-white/10 bg-card p-1 shadow-lg shadow-black/20 sm:grid-cols-4">
             <TabsTrigger value="los-santos">Los Santos</TabsTrigger>
             <TabsTrigger value="san-fierro">San Fierro</TabsTrigger>
             <TabsTrigger value="las-venturas">Las Venturas</TabsTrigger>
