@@ -9,7 +9,11 @@ const {
   dialog,
   nativeImage,
 } = require("electron");
-const { TransportistaAgent, resolveChatlogPath } = require("../transportista-core");
+const {
+  TransportistaAgent,
+  loadUserGroups,
+  resolveChatlogPath,
+} = require("../transportista-core");
 
 const BUNDLED_FIREBASE_PATH = path.join(__dirname, "firebase-public-config.json");
 let tray = null;
@@ -176,6 +180,24 @@ ipcMain.handle("config:save", (_event, config) => {
   writeConfig(config);
   sendStatus({ state: "saved" });
   return { ok: true, configPath: getConfigPath() };
+});
+
+ipcMain.handle("auth:groups", async (_event, config) => {
+  const nextConfig = {
+    ...readConfig(),
+    ...config,
+    auth: { ...readConfig().auth, ...config.auth },
+    firebase: { ...readConfig().firebase, ...config.firebase },
+  };
+
+  const result = await loadUserGroups(
+    nextConfig.firebase?.apiKey,
+    nextConfig.firebase?.databaseURL,
+    nextConfig.auth?.email,
+    nextConfig.auth?.password
+  );
+
+  return result.groups;
 });
 
 ipcMain.handle("chatlog:pick", async () => {

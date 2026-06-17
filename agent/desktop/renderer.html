@@ -65,7 +65,20 @@
         outline: none;
       }
 
-      input:focus {
+      select {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 7px;
+        background: #10161c;
+        color: #f5f5f5;
+        font-size: 14px;
+        height: 38px;
+        padding: 0 11px;
+        outline: none;
+      }
+
+      input:focus,
+      select:focus {
         border-color: rgba(20, 184, 166, 0.75);
       }
 
@@ -166,10 +179,6 @@
           <input id="agentName" autocomplete="off" />
         </label>
         <label>
-          ID del grupo
-          <input id="groupId" autocomplete="off" />
-        </label>
-        <label>
           Email
           <input id="email" autocomplete="email" />
         </label>
@@ -179,6 +188,15 @@
         </label>
         <div class="row">
           <label>
+            Grupo
+            <select id="groupId">
+              <option value="">Carga tus grupos</option>
+            </select>
+          </label>
+          <button id="load-groups" class="secondary" type="button">Cargar</button>
+        </div>
+        <div class="row">
+          <label>
             Chatlog
             <input id="chatlogPath" placeholder="Automatico si lo dejas vacio" />
           </label>
@@ -186,6 +204,10 @@
         </div>
         <details>
           <summary>Avanzado</summary>
+          <label>
+            ID del grupo manual
+            <input id="manualGroupId" autocomplete="off" />
+          </label>
           <label>
             Firebase API key
             <input id="apiKey" autocomplete="off" />

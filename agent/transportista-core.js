@@ -160,6 +160,25 @@ async function loadLastAcceptedCall(databaseURL, idToken, groupId) {
     .sort((a, b) => b.calledAt - a.calledAt)[0] ?? null;
 }
 
+async function loadUserGroups(apiKey, databaseURL, email, password) {
+  const session = await signIn(apiKey, email, password);
+  const userGroups = await firebaseRequest(
+    databaseURL,
+    session.idToken,
+    "GET",
+    `userGroups/${session.localId}`
+  );
+
+  return {
+    groups: Object.entries(userGroups ?? {}).map(([id, group]) => ({
+      id,
+      name: group.name ?? id,
+      role: group.role ?? "member",
+    })),
+    userId: session.localId,
+  };
+}
+
 class TransportistaAgent extends EventEmitter {
   constructor(config) {
     super();
@@ -387,6 +406,7 @@ module.exports = {
   TransportistaAgent,
   getDocumentsCandidates,
   isTransportistaCall,
+  loadUserGroups,
   loadConfig,
   readJson,
   resolveChatlogPath,

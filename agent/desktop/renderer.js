@@ -5,6 +5,7 @@ const fields = {
   databaseURL: document.querySelector("#databaseURL"),
   email: document.querySelector("#email"),
   groupId: document.querySelector("#groupId"),
+  manualGroupId: document.querySelector("#manualGroupId"),
   password: document.querySelector("#password"),
 };
 const state = document.querySelector("#state");
@@ -34,8 +35,26 @@ function fillForm(config) {
   fields.chatlogPath.value = config.chatlogPath ?? "";
   fields.databaseURL.value = config.firebase?.databaseURL ?? "";
   fields.email.value = config.auth?.email ?? "";
-  fields.groupId.value = config.groupId ?? "";
+  fields.manualGroupId.value = config.groupId ?? "";
+  setGroupOptions([], config.groupId ?? "");
   fields.password.value = config.auth?.password ?? "";
+}
+
+function setGroupOptions(groups, selectedGroupId = "") {
+  fields.groupId.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = groups.length > 0 ? "Selecciona un grupo" : "Carga tus grupos";
+  fields.groupId.append(placeholder);
+
+  for (const group of groups) {
+    const option = document.createElement("option");
+    option.value = group.id;
+    option.textContent = `${group.name} (${group.role})`;
+    fields.groupId.append(option);
+  }
+
+  fields.groupId.value = selectedGroupId;
 }
 
 function readForm() {
@@ -51,7 +70,7 @@ function readForm() {
       apiKey: fields.apiKey.value.trim(),
       databaseURL: fields.databaseURL.value.trim(),
     },
-    groupId: fields.groupId.value.trim(),
+    groupId: (fields.groupId.value || fields.manualGroupId.value).trim(),
     heartbeatIntervalMs: 30000,
     maxIntervalMs: 325000,
     minIntervalMs: 285000,
@@ -71,6 +90,31 @@ document.querySelector("#pick-chatlog").addEventListener("click", async () => {
   if (filePath) {
     fields.chatlogPath.value = filePath;
   }
+});
+
+document.querySelector("#load-groups").addEventListener("click", async () => {
+  try {
+    await window.transportistaAgent.saveConfig(readForm());
+    const groups = await window.transportistaAgent.loadGroups(readForm());
+    const selectedGroupId = fields.groupId.value || fields.manualGroupId.value;
+    setGroupOptions(groups, selectedGroupId);
+
+    if (groups.length === 1) {
+      fields.groupId.value = groups[0].id;
+      fields.manualGroupId.value = groups[0].id;
+      await window.transportistaAgent.saveConfig(readForm());
+      addLog(`Grupo seleccionado: ${groups[0].name}`);
+      return;
+    }
+
+    addLog(`${groups.length} grupos cargados.`);
+  } catch (error) {
+    addLog(error.message);
+  }
+});
+
+fields.groupId.addEventListener("change", () => {
+  fields.manualGroupId.value = fields.groupId.value;
 });
 
 document.querySelector("#start").addEventListener("click", async () => {

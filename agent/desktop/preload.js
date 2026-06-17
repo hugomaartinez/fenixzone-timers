@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("transportistaAgent", {
   getConfig: () => ipcRenderer.invoke("config:get"),
+  loadGroups: (config) => ipcRenderer.invoke("auth:groups", config),
   onEvent: (callback) => ipcRenderer.on("agent:event", (_event, payload) => callback(payload)),
   onStatus: (callback) => ipcRenderer.on("agent:status", (_event, payload) => callback(payload)),
   pickChatlog: () => ipcRenderer.invoke("chatlog:pick"),
