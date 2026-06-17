@@ -7,6 +7,7 @@ import SanFierro from "@/components/san-fierro";
 import LasVenturas from "@/components/las-venturas";
 import AuthPanel from "@/components/auth-panel";
 import GroupToolbar from "@/components/group-toolbar";
+import Transportista from "@/components/transportista";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useGroups } from "@/app/hooks/useGroups";
 
@@ -90,10 +91,11 @@ export default function CitiesApp() {
       ) : null}
       {activeGroupId ? (
         <Tabs defaultValue="los-santos">
-          <TabsList className="grid w-full grid-cols-3 rounded-lg border border-white/10 bg-card p-1">
+          <TabsList className="grid h-auto w-full grid-cols-2 rounded-lg border border-white/10 bg-card p-1 sm:grid-cols-4">
             <TabsTrigger value="los-santos">Los Santos</TabsTrigger>
             <TabsTrigger value="san-fierro">San Fierro</TabsTrigger>
             <TabsTrigger value="las-venturas">Las Venturas</TabsTrigger>
+            <TabsTrigger value="transportista">Transportista</TabsTrigger>
           </TabsList>
           <TabsContent value="los-santos" className="mt-5">
             <LosSantos groupId={activeGroupId} />
@@ -103,6 +105,9 @@ export default function CitiesApp() {
           </TabsContent>
           <TabsContent value="las-venturas" className="mt-5">
             <LasVenturas groupId={activeGroupId} />
+          </TabsContent>
+          <TabsContent value="transportista" className="mt-5">
+            <Transportista groupId={activeGroupId} />
           </TabsContent>
         </Tabs>
       ) : null}

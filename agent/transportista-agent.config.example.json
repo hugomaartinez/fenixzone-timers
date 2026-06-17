@@ -1,0 +1,19 @@
+{
+  "agentName": "PC de Hugo",
+  "groupId": "PEGA_AQUI_EL_GROUP_ID",
+  "auth": {
+    "email": "usuario@email.com",
+    "password": "password"
+  },
+  "firebase": {
+    "apiKey": "",
+    "databaseURL": ""
+  },
+  "chatlogPath": "",
+  "pollIntervalMs": 1000,
+  "heartbeatIntervalMs": 30000,
+  "minIntervalMs": 285000,
+  "maxIntervalMs": 325000,
+  "fallbackIntervalMs": 306000,
+  "readExistingOnStart": false
+}

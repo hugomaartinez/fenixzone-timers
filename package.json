@@ -2,11 +2,33 @@
   "name": "fenixzone-timers",
   "version": "0.1.0",
   "private": true,
+  "main": "agent/desktop/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "transportista:desktop": "electron agent/desktop/main.js",
+    "transportista:desktop:config": "node agent/build-desktop-config.js",
+    "transportista:desktop:build": "powershell -NoProfile -ExecutionPolicy Bypass -File agent/build-desktop.ps1",
+    "transportista:agent": "node agent/transportista-agent.js",
     "start": "next start",
     "lint": "next lint"
+  },
+  "build": {
+    "appId": "com.fenixzone.transportista-agent",
+    "productName": "Transportista Agent",
+    "files": [
+      "agent/**/*",
+      "package.json"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "Transportista-Agent.exe"
+    }
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",
@@ -28,6 +50,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "eslint": "^8",
     "eslint-config-next": "15.0.4",
     "postcss": "^8",

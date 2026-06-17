@@ -18,6 +18,58 @@ groups/{groupId}/timers/{cityName}/{timerName}
 
 Users can create a group, copy the invitation link, and another logged-in user can join with `?invite={groupId}`.
 
+Transportista calls are stored under:
+
+```text
+groups/{groupId}/transportista/events
+groups/{groupId}/transportista/status
+```
+
+## Transportista Agent
+
+The local agent watches the SAMP chatlog and sends valid transportista calls to Firebase.
+
+Desktop app for friends:
+
+```bash
+bun run transportista:desktop:build
+```
+
+This generates:
+
+```text
+dist\Transportista-Agent.exe
+```
+
+That `.exe` is portable. Friends can open it normally, configure email/password/group once, press **Iniciar**, and leave it running in the Windows tray. Closing the window hides it; use the tray icon to open, stop, start, or exit.
+
+CLI setup on each PC:
+
+1. Copy `agent/transportista-agent.config.example.json` to `agent/transportista-agent.config.json`.
+2. Fill `groupId`, `auth.email` and `auth.password`.
+3. Leave `chatlogPath` empty unless the SAMP folder is not in the user's Documents folder.
+4. Run:
+
+```bash
+bun run transportista:agent
+```
+
+The agent resolves the default chatlog path from the current Windows user:
+
+```text
+<Documents>\GTA San Andreas User Files\SAMP\chatlog.txt
+```
+
+It accepts calls only when the interval from the previous accepted call is realistic. Defaults:
+
+```text
+minIntervalMs = 285000  # 4:45
+maxIntervalMs = 325000  # 5:25
+fallbackIntervalMs = 306000  # 5:06 from the old transportista.ini
+```
+
+Intervals outside that window are discarded and only reflected in `transportista/status` as the last rejected detection.
+
 ## Getting Started
 
 First, run the development server:

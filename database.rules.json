@@ -23,6 +23,10 @@
         "timers": {
           ".read": "auth != null && data.parent().child('members').child(auth.uid).exists()",
           ".write": "auth != null && data.parent().child('members').child(auth.uid).exists()"
+        },
+        "transportista": {
+          ".read": "auth != null && data.parent().child('members').child(auth.uid).exists()",
+          ".write": "auth != null && data.parent().child('members').child(auth.uid).exists()"
         }
       }
     },
