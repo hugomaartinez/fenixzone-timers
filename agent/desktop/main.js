@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const {
   app,
   BrowserWindow,
@@ -36,6 +37,7 @@ function readBundledFirebaseConfig() {
 function readConfig() {
   const firebase = readBundledFirebaseConfig();
   const defaultConfig = {
+    agentId: crypto.randomUUID(),
     agentName: app.getName(),
     auth: { email: "", password: "" },
     chatlogPath: "",
@@ -55,12 +57,18 @@ function readConfig() {
   }
 
   const savedConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  return {
+  const nextConfig = {
     ...defaultConfig,
     ...savedConfig,
     auth: { ...defaultConfig.auth, ...savedConfig.auth },
     firebase: { ...defaultConfig.firebase, ...savedConfig.firebase },
   };
+
+  if (!savedConfig.agentId) {
+    fs.writeFileSync(configPath, `${JSON.stringify(nextConfig, null, 2)}\n`);
+  }
+
+  return nextConfig;
 }
 
 function writeConfig(config) {

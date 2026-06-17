@@ -108,6 +108,23 @@ function parseChatlogTimestamp(line, now = new Date()) {
   return timestamp.getTime();
 }
 
+function sanitizeFirebaseKey(value) {
+  return String(value)
+    .replace(/[.#$/[\]]/g, "-")
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80);
+}
+
+function createFallbackAgentId() {
+  const username = os.userInfo().username || "user";
+  return sanitizeFirebaseKey(`${os.hostname()}-${username}`);
+}
+
+function createCallEventId(calledAt) {
+  return `call_${Math.floor(calledAt / 1000)}`;
+}
+
 function loadConfig(configPath, envDir = path.join(__dirname, "..")) {
   const localEnv = {
     ...readEnvFile(path.join(envDir, ".env")),
@@ -211,6 +228,7 @@ class TransportistaAgent extends EventEmitter {
   getSettings() {
     return {
       agentName: this.config.agentName || os.hostname(),
+      agentId: sanitizeFirebaseKey(this.config.agentId || createFallbackAgentId()),
       apiKey: this.config.firebase?.apiKey,
       databaseURL: this.config.firebase?.databaseURL,
       email: this.config.auth?.email,
@@ -287,6 +305,11 @@ class TransportistaAgent extends EventEmitter {
     this.pollTimer = null;
     this.heartbeatTimer = null;
     this.running = false;
+    if (this.idToken && this.getSettings().groupId) {
+      this.writeStatus({ running: false, state: "stopped", stoppedAt: Date.now() }).catch((error) => {
+        this.emitError(error);
+      });
+    }
     this.emit("status", this.getStatus("stopped"));
   }
 
@@ -305,14 +328,17 @@ class TransportistaAgent extends EventEmitter {
       settings.databaseURL,
       this.idToken,
       "PATCH",
-      `groups/${settings.groupId}/transportista/status`,
+      `groups/${settings.groupId}/transportista/agents/${settings.agentId}`,
       {
+        agentId: settings.agentId,
         agentName: settings.agentName,
         chatlogPath: this.chatlogPath,
         fallbackIntervalMs: settings.fallbackIntervalMs,
         lastSeenAt: Date.now(),
         maxIntervalMs: settings.maxIntervalMs,
         minIntervalMs: settings.minIntervalMs,
+        running: this.running,
+        state: this.running ? "running" : "starting",
         ...extra,
       }
     );
@@ -320,13 +346,15 @@ class TransportistaAgent extends EventEmitter {
 
   async acceptCall(line, calledAt, intervalMs) {
     const settings = this.getSettings();
+    const eventId = createCallEventId(calledAt);
     await firebaseRequest(
       settings.databaseURL,
       this.idToken,
-      "POST",
-      `groups/${settings.groupId}/transportista/events`,
+      "PATCH",
+      `groups/${settings.groupId}/transportista/events/${eventId}`,
       {
         agentName: settings.agentName,
+        agentId: settings.agentId,
         calledAt,
         detectedAt: Date.now(),
         intervalMs,
@@ -341,7 +369,7 @@ class TransportistaAgent extends EventEmitter {
       lastRejectedIntervalMs: null,
       lastRejectedReason: null,
     });
-    this.emit("accepted", { calledAt, intervalMs });
+    this.emit("accepted", { calledAt, eventId, intervalMs });
   }
 
   async rejectCall(calledAt, intervalMs, reason) {
@@ -426,6 +454,7 @@ module.exports = {
   DEFAULT_MAX_INTERVAL_MS,
   DEFAULT_MIN_INTERVAL_MS,
   TransportistaAgent,
+  createCallEventId,
   getDocumentsCandidates,
   isTransportistaCall,
   loadUserGroups,

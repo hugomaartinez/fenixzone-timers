@@ -6,19 +6,26 @@ import { database } from "@/app/firebase";
 
 export interface TransportistaEvent {
   id: string;
+  agentId?: string;
   calledAt: number;
   detectedAt: number;
   intervalMs?: number;
+  agentName?: string;
   source?: string;
   line?: string;
 }
 
-export interface TransportistaStatus {
+export interface TransportistaAgentStatus {
+  agentId?: string;
   agentName?: string;
+  chatlogPath?: string;
   lastSeenAt?: number;
+  lastAcceptedAt?: number;
   lastRejectedAt?: number;
   lastRejectedReason?: string;
   lastRejectedIntervalMs?: number;
+  running?: boolean;
+  state?: string;
 }
 
 const MIN_REAL_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
@@ -39,7 +46,7 @@ function average(values: number[]) {
 
 export function useTransportista(groupId: string) {
   const [events, setEvents] = useState<TransportistaEvent[]>([]);
-  const [status, setStatus] = useState<TransportistaStatus | null>(null);
+  const [agents, setAgents] = useState<TransportistaAgentStatus[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,10 +71,19 @@ export function useTransportista(groupId: string) {
   }, [groupId]);
 
   useEffect(() => {
-    const statusRef = ref(database, `groups/${groupId}/transportista/status`);
+    const agentsRef = ref(database, `groups/${groupId}/transportista/agents`);
 
-    const unsubscribe = onValue(statusRef, (snapshot) => {
-      setStatus(snapshot.val());
+    const unsubscribe = onValue(agentsRef, (snapshot) => {
+      const rawAgents = snapshot.val() ?? {};
+      const nextAgents = Object.entries(rawAgents)
+        .map(([id, value]) => ({
+          id,
+          ...(value as TransportistaAgentStatus),
+        }))
+        .filter((agent) => typeof agent.lastSeenAt === "number")
+        .sort((a, b) => (b.lastSeenAt ?? 0) - (a.lastSeenAt ?? 0));
+
+      setAgents(nextAgents);
     });
 
     return () => unsubscribe();
@@ -89,6 +105,7 @@ export function useTransportista(groupId: string) {
     const lastEvent = events[events.length - 1] ?? null;
 
     return {
+      agents,
       averageIntervalMs,
       events,
       fallbackIntervalMs: FALLBACK_INTERVAL_MS,
@@ -98,7 +115,7 @@ export function useTransportista(groupId: string) {
       minRealIntervalMs: MIN_REAL_INTERVAL_MS,
       nextCallAt: lastEvent ? lastEvent.calledAt + averageIntervalMs : null,
       realisticIntervalsCount: intervals.length,
-      status,
+      status: agents[0] ?? null,
     };
-  }, [events, loading, status]);
+  }, [agents, events, loading]);
 }

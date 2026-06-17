@@ -7,6 +7,7 @@ import {
   RadioIcon,
   TimerResetIcon,
   TruckIcon,
+  WifiIcon,
 } from "lucide-react";
 import { useTransportista } from "@/app/hooks/useTransportista";
 import {
@@ -45,6 +46,7 @@ function formatTime(timestamp: number | null) {
 export default function Transportista({ groupId }: TransportistaProps) {
   const [now, setNow] = useState(Date.now());
   const {
+    agents,
     averageIntervalMs,
     events,
     fallbackIntervalMs,
@@ -52,7 +54,6 @@ export default function Transportista({ groupId }: TransportistaProps) {
     loading,
     nextCallAt,
     realisticIntervalsCount,
-    status,
   } = useTransportista(groupId);
 
   useEffect(() => {
@@ -60,7 +61,11 @@ export default function Transportista({ groupId }: TransportistaProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const agentOnline = status?.lastSeenAt ? now - status.lastSeenAt < 45000 : false;
+  const onlineAgents = agents.filter(
+    (agent) => agent.lastSeenAt && now - agent.lastSeenAt < 45000 && agent.running !== false
+  );
+  const agentOnline = onlineAgents.length > 0;
+  const lastRejectedAgent = agents.find((agent) => agent.lastRejectedAt);
   const estimatedNextCallAt =
     lastEvent && nextCallAt
       ? nextCallAt + Math.max(0, Math.ceil((now - nextCallAt) / averageIntervalMs)) * averageIntervalMs
@@ -90,7 +95,9 @@ export default function Transportista({ groupId }: TransportistaProps) {
             )}
           >
             <RadioIcon className="h-3.5 w-3.5" />
-            {agentOnline ? "Agente activo" : "Sin agente"}
+            {agentOnline
+              ? `${onlineAgents.length} agente${onlineAgents.length === 1 ? "" : "s"} activo${onlineAgents.length === 1 ? "" : "s"}`
+              : "Sin agente"}
           </span>
         </CardHeader>
         <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
@@ -160,14 +167,65 @@ export default function Transportista({ groupId }: TransportistaProps) {
               </span>
             </div>
           ))}
-          {status?.lastRejectedAt ? (
+          {lastRejectedAgent?.lastRejectedAt ? (
             <p className="rounded-md border border-amber-300/20 bg-amber-300/[0.04] px-3 py-2 text-xs text-muted-foreground">
-              Ultimo descarte: {formatTime(status.lastRejectedAt)}
-              {status.lastRejectedIntervalMs
-                ? ` (${formatDuration(status.lastRejectedIntervalMs)})`
+              Ultimo descarte: {formatTime(lastRejectedAgent.lastRejectedAt)}
+              {lastRejectedAgent.lastRejectedIntervalMs
+                ? ` (${formatDuration(lastRejectedAgent.lastRejectedIntervalMs)})`
                 : ""}
             </p>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden rounded-lg border-white/10 bg-card shadow-lg shadow-black/20 lg:col-span-2">
+        <CardHeader className="border-b border-white/10 bg-white/[0.03] p-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <WifiIcon className="h-5 w-5 text-teal-300" />
+            Agentes conectados
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          {agents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Todavia no hay agentes registrados.</p>
+          ) : null}
+          {agents.map((agent) => {
+            const online =
+              Boolean(agent.lastSeenAt) &&
+              now - Number(agent.lastSeenAt) < 45000 &&
+              agent.running !== false;
+
+            return (
+              <div
+                className="rounded-md border border-white/10 bg-background px-3 py-2 text-sm"
+                key={agent.agentId ?? agent.agentName ?? agent.lastSeenAt}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate font-medium">
+                    {agent.agentName ?? "Agente sin nombre"}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded px-2 py-0.5 text-xs",
+                      online
+                        ? "bg-teal-400/10 text-teal-300"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {online ? "Online" : "Offline"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Ultima senal: {formatTime(agent.lastSeenAt ?? null)}
+                </p>
+                {agent.lastRejectedAt ? (
+                  <p className="mt-1 text-xs text-amber-300">
+                    Descarte: {formatTime(agent.lastRejectedAt)}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
     </div>
