@@ -78,7 +78,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
               Transportista
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Estimacion basada en llamadas reales del grupo
+              Estimación basada en llamadas reales
             </p>
           </div>
           <span
@@ -115,7 +115,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
             </p>
             {lastEvent && estimatedNextCallAt && estimatedNextCallAt !== nextCallAt ? (
               <p className="mt-1 text-xs text-muted-foreground">
-                Estimacion continua
+                (Estimación)
               </p>
             ) : null}
           </div>
