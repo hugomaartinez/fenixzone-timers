@@ -104,7 +104,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
           <div className="rounded-lg border border-white/10 bg-background p-4">
             <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
               <ClockIcon className="h-4 w-4 text-amber-300" />
-              Ultima llamada
+              Última llamada
             </div>
             <p className="font-mono text-2xl font-bold tabular-nums">
               {formatTime(lastEvent?.calledAt ?? null)}
@@ -113,7 +113,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
           <div className="rounded-lg border border-white/10 bg-background p-4">
             <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
               <TimerResetIcon className="h-4 w-4 text-teal-300" />
-              Proxima llamada
+              Próxima llamada
             </div>
             <p className="font-mono text-2xl font-bold tabular-nums">
               {estimatedNextCallAt
@@ -136,7 +136,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {realisticIntervalsCount > 0
-                ? `${realisticIntervalsCount} intervalos validos`
+                ? `${realisticIntervalsCount} intervalos válidos`
                 : "Usando valor por defecto"}
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
           ) : null}
           {!loading && recentEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Todavia no hay llamadas registradas.
+              Todavía no hay llamadas registradas.
             </p>
           ) : null}
           {recentEvents.map((event) => (
@@ -169,7 +169,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
           ))}
           {lastRejectedAgent?.lastRejectedAt ? (
             <p className="rounded-md border border-amber-300/20 bg-amber-300/[0.04] px-3 py-2 text-xs text-muted-foreground">
-              Ultimo descarte: {formatTime(lastRejectedAgent.lastRejectedAt)}
+              Último descarte: {formatTime(lastRejectedAgent.lastRejectedAt)}
               {lastRejectedAgent.lastRejectedIntervalMs
                 ? ` (${formatDuration(lastRejectedAgent.lastRejectedIntervalMs)})`
                 : ""}
@@ -187,7 +187,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
         </CardHeader>
         <CardContent className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           {agents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Todavia no hay agentes registrados.</p>
+            <p className="text-sm text-muted-foreground">Todavía no hay agentes registrados.</p>
           ) : null}
           {agents.map((agent) => {
             const online =
@@ -216,7 +216,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Ultima senal: {formatTime(agent.lastSeenAt ?? null)}
+                  Última señal: {formatTime(agent.lastSeenAt ?? null)}
                 </p>
                 {agent.lastRejectedAt ? (
                   <p className="mt-1 text-xs text-amber-300">

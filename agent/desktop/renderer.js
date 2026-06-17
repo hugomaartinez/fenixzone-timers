@@ -26,7 +26,7 @@ function addLog(message) {
 function setStatus(status) {
   state.textContent = status.running || status.state === "running" ? "Iniciado" : "Parado";
   state.classList.toggle("running", status.running || status.state === "running");
-  pathLabel.textContent = status.chatlogPath ?? "Chatlog automatico";
+  pathLabel.textContent = status.chatlogPath ?? "Chatlog automático";
 
   if (status.error) {
     addLog(status.error);
@@ -127,7 +127,7 @@ document.querySelector("#login-form").addEventListener("submit", async (event) =
   loginError.classList.add("hidden");
   try {
     await connectWithCredentials(fields.email.value.trim(), fields.password.value);
-    addLog("Sesion iniciada.");
+    addLog("Sesión iniciada.");
   } catch (error) {
     loginError.textContent = error.message;
     loginError.classList.remove("hidden");

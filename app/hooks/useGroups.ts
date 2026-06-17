@@ -59,7 +59,7 @@ export function useGroups(user: User | null, profile: UserProfile | null) {
 
   const createGroup = useCallback(async (name: string) => {
     if (!user) {
-      throw new Error("Necesitas iniciar sesion para crear un grupo.");
+      throw new Error("Necesitas iniciar sesión para crear un grupo.");
     }
 
     const trimmedName = name.trim();
@@ -102,7 +102,7 @@ export function useGroups(user: User | null, profile: UserProfile | null) {
 
   const joinGroup = useCallback(async (groupId: string) => {
     if (!user) {
-      throw new Error("Inicia sesion para unirte al grupo.");
+      throw new Error("Inicia sesión para unirte al grupo.");
     }
 
     const trimmedGroupId = groupId.trim();
@@ -110,7 +110,7 @@ export function useGroups(user: User | null, profile: UserProfile | null) {
     const groupName = groupNameSnapshot.val();
 
     if (!groupName) {
-      throw new Error("El enlace de invitacion no pertenece a ningun grupo.");
+      throw new Error("El enlace de invitación no pertenece a ningún grupo.");
     }
 
     const now = Date.now();

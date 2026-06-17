@@ -38,7 +38,7 @@ export default function CitiesApp() {
 
     joinGroup(inviteGroupId)
       .then(() => {
-        setInviteMessage("Te has unido al grupo de la invitacion.");
+        setInviteMessage("Te has unido al grupo de la invitación.");
         params.delete("invite");
         const nextSearch = params.toString();
         const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
@@ -46,7 +46,7 @@ export default function CitiesApp() {
       })
       .catch((error) => {
         setInviteMessage(
-          error instanceof Error ? error.message : "No se pudo aceptar la invitacion."
+          error instanceof Error ? error.message : "No se pudo aceptar la invitación."
         );
       });
   }, [joinGroup, user]);

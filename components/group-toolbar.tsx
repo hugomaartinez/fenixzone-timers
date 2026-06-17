@@ -152,10 +152,14 @@ export default function GroupToolbar({
             type="button"
             variant="outline"
             size="icon"
-            className="lg:hidden"
+            className={`lg:hidden ${
+              isMobileMenuOpen
+                ? "border-teal-300/30 bg-teal-400/10 text-teal-200"
+                : "border-white/10 bg-white/[0.03]"
+            }`}
             onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
             aria-expanded={isMobileMenuOpen}
-            aria-label="Abrir menu"
+            aria-label="Abrir menú"
           >
             {isMobileMenuOpen ? <XIcon className="h-4 w-4" /> : <MenuIcon className="h-4 w-4" />}
           </Button>
@@ -189,7 +193,7 @@ export default function GroupToolbar({
               disabled={!activeGroup}
             >
               <CopyIcon className="h-4 w-4" />
-              Invitacion
+              Invitación
             </Button>
             <Button type="button" variant="ghost" onClick={handleLogout}>
               <LogOutIcon className="h-4 w-4" />
@@ -198,68 +202,88 @@ export default function GroupToolbar({
           </div>
         </div>
         {isMobileMenuOpen ? (
-          <div className="border-t border-white/10 px-4 pb-4 lg:hidden">
-            <div className="mx-auto grid max-w-6xl gap-3 rounded-lg border border-white/10 bg-card p-3 shadow-xl shadow-black/20">
-              <div className="grid gap-1 text-xs text-muted-foreground">
-                {playerName ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Gamepad2Icon className="h-3.5 w-3.5 text-amber-300" />
-                    {playerName}
+          <div className="px-3 pb-3 lg:hidden">
+            <div className="mx-auto max-w-6xl overflow-hidden rounded-lg border border-white/10 bg-[linear-gradient(180deg,_rgba(255,255,255,0.075),_rgba(255,255,255,0.035))] shadow-2xl shadow-black/35 backdrop-blur">
+              <div className="border-b border-white/10 bg-black/20 p-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">
+                    Grupo activo
                   </span>
-                ) : null}
-                {server ? (
-                  <span className="inline-flex items-center gap-1">
-                    <ServerIcon className="h-3.5 w-3.5 text-teal-300" />
-                    {server}
+                  <span className="rounded-md bg-teal-400/10 px-2 py-1 text-xs font-medium text-teal-200">
+                    {groups.length} grupo{groups.length === 1 ? "" : "s"}
                   </span>
-                ) : null}
-                {userEmail ? (
-                  <span className="inline-flex min-w-0 items-center gap-1">
-                    <UserIcon className="h-3.5 w-3.5" />
-                    <span className="truncate">{userEmail}</span>
-                  </span>
-                ) : null}
+                </div>
+                <label className="relative flex items-center">
+                  <select
+                    className="h-10 w-full appearance-none rounded-md border border-white/10 bg-background/90 px-3 pr-10 text-sm font-medium outline-none transition-colors focus-visible:border-teal-300/50 focus-visible:ring-1 focus-visible:ring-teal-300/40"
+                    value={activeGroup?.id ?? ""}
+                    onChange={(event) => handleSelectGroup(event.target.value)}
+                    disabled={groups.length === 0}
+                    aria-label="Seleccionar grupo"
+                  >
+                    {groups.length === 0 ? <option value="">Sin grupos</option> : null}
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
+                </label>
               </div>
-              <label className="relative inline-flex items-center">
-                <select
-                  className="h-9 w-full appearance-none rounded-md border border-input bg-background px-3 pr-10 text-sm outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring"
-                  value={activeGroup?.id ?? ""}
-                  onChange={(event) => handleSelectGroup(event.target.value)}
-                  disabled={groups.length === 0}
-                  aria-label="Seleccionar grupo"
-                >
-                  {groups.length === 0 ? <option value="">Sin grupos</option> : null}
-                  {groups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="outline" onClick={handleOpenCreateGroup}>
-                  <PlusIcon className="h-4 w-4" />
-                  Grupo
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCopyInviteAndClose}
-                  disabled={!activeGroup}
-                >
-                  <CopyIcon className="h-4 w-4" />
-                  Invitacion
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="col-span-2"
-                  onClick={handleLogout}
-                >
-                  <LogOutIcon className="h-4 w-4" />
-                  Salir
-                </Button>
+
+              <div className="grid gap-3 p-3">
+                <div className="grid gap-2 rounded-md border border-white/10 bg-background/60 p-3">
+                  {playerName ? (
+                    <span className="inline-flex min-w-0 items-center gap-2 text-sm">
+                      <Gamepad2Icon className="h-4 w-4 shrink-0 text-amber-300" />
+                      <span className="truncate">{playerName}</span>
+                    </span>
+                  ) : null}
+                  {server ? (
+                    <span className="inline-flex min-w-0 items-center gap-2 text-sm">
+                      <ServerIcon className="h-4 w-4 shrink-0 text-teal-300" />
+                      <span className="truncate">{server}</span>
+                    </span>
+                  ) : null}
+                  {userEmail ? (
+                    <span className="inline-flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                      <UserIcon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{userEmail}</span>
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-10 justify-start rounded-md border border-white/10 bg-white/[0.035] px-3 hover:bg-white/[0.07]"
+                    onClick={handleOpenCreateGroup}
+                  >
+                    <PlusIcon className="h-4 w-4 text-teal-300" />
+                    Crear grupo
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-10 justify-start rounded-md border border-white/10 bg-white/[0.035] px-3 hover:bg-white/[0.07]"
+                    onClick={handleCopyInviteAndClose}
+                    disabled={!activeGroup}
+                  >
+                    <CopyIcon className="h-4 w-4 text-amber-300" />
+                    Copiar invitación
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-10 justify-start rounded-md border border-red-300/15 bg-red-300/[0.035] px-3 text-red-100 hover:bg-red-300/[0.08] hover:text-red-50"
+                    onClick={handleLogout}
+                  >
+                    <LogOutIcon className="h-4 w-4" />
+                    Cerrar sesión
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -282,7 +306,7 @@ export default function GroupToolbar({
               <div>
                 <h2 className="text-base font-semibold">Crear grupo</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Elige un nombre para compartir timers.
+                  Elige un nombre para compartir temporizadores.
                 </p>
               </div>
               <Button

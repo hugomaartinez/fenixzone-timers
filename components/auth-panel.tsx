@@ -55,7 +55,7 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
       const message =
         authError instanceof Error
           ? authError.message
-          : "No se pudo completar la autenticacion.";
+          : "No se pudo completar la autenticación.";
       setError(message);
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
             <p className="max-w-xl text-sm text-muted-foreground">
               {isRegister
                 ? "Aquí solo pedimos lo necesario: email, contraseña, nick y servidor."
-                : "Usa tu cuenta para abrir tus grupos y timers."}
+                : "Usa tu cuenta para abrir tus grupos y temporizadores."}
             </p>
           </div>
         </section>
@@ -117,7 +117,7 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
             <CardDescription>
               {isRegister
                 ? "Completa tus datos de jugador antes de entrar al grupo."
-                : "Accede rapido a tus grupos compartidos."}
+                : "Accede rápido a tus grupos compartidos."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -137,11 +137,11 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
                 </span>
               </label>
 
-            {isRegister ? (
-              <div className="space-y-4 rounded-lg border border-amber-300/20 bg-amber-300/[0.04] p-4">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Gamepad2Icon className="h-4 w-4 text-amber-300" />
-                  Perfil dentro del juego
+              {isRegister ? (
+                <div className="space-y-4 rounded-lg border border-amber-300/20 bg-amber-300/[0.04] p-4">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Gamepad2Icon className="h-4 w-4 text-amber-300" />
+                    Perfil dentro del juego
                   </div>
                   <label className="block space-y-2 text-sm font-medium">
                     <span>Nombre dentro del juego</span>
@@ -172,7 +172,7 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
                         <option>Roleplay 2</option>
                         <option>Roleplay 3</option>
                         <option>Roleplay 4</option>
-                          <option>DM / Freeroam</option>
+                        <option>DM / Freeroam</option>
                       </select>
                       <ChevronDownIcon className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
                     </span>
@@ -181,7 +181,7 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
               ) : null}
 
               <label className="block space-y-2 text-sm font-medium">
-                <span>Contrasena</span>
+                <span>Contraseña</span>
                 <span className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
                   <LockIcon className="h-4 w-4 text-muted-foreground" />
                   <input
@@ -211,7 +211,7 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
               variant="ghost"
               onClick={() => switchMode(isRegister ? "login" : "register")}
             >
-              {isRegister ? "Volver al login" : "Crear una cuenta nueva"}
+              {isRegister ? "Volver al inicio de sesión" : "Crear una cuenta nueva"}
             </Button>
           </CardContent>
         </Card>
