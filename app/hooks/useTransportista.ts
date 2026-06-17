@@ -47,6 +47,7 @@ function average(values: number[]) {
 export function useTransportista(groupId: string) {
   const [events, setEvents] = useState<TransportistaEvent[]>([]);
   const [agents, setAgents] = useState<TransportistaAgentStatus[]>([]);
+  const [legacyStatus, setLegacyStatus] = useState<TransportistaAgentStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,7 +90,22 @@ export function useTransportista(groupId: string) {
     return () => unsubscribe();
   }, [groupId]);
 
+  useEffect(() => {
+    const statusRef = ref(database, `groups/${groupId}/transportista/status`);
+
+    const unsubscribe = onValue(statusRef, (snapshot) => {
+      const status = snapshot.val();
+      setLegacyStatus(status && typeof status.lastSeenAt === "number" ? status : null);
+    });
+
+    return () => unsubscribe();
+  }, [groupId]);
+
   return useMemo(() => {
+    const visibleAgents =
+      agents.length > 0 || !legacyStatus
+        ? agents
+        : [{ ...legacyStatus, agentId: "legacy-status" }];
     const intervals = events
       .map((event, index) => {
         if (event.intervalMs) {
@@ -105,7 +121,7 @@ export function useTransportista(groupId: string) {
     const lastEvent = events[events.length - 1] ?? null;
 
     return {
-      agents,
+      agents: visibleAgents,
       averageIntervalMs,
       events,
       fallbackIntervalMs: FALLBACK_INTERVAL_MS,
@@ -115,7 +131,7 @@ export function useTransportista(groupId: string) {
       minRealIntervalMs: MIN_REAL_INTERVAL_MS,
       nextCallAt: lastEvent ? lastEvent.calledAt + averageIntervalMs : null,
       realisticIntervalsCount: intervals.length,
-      status: agents[0] ?? null,
+      status: visibleAgents[0] ?? null,
     };
-  }, [agents, events, loading]);
+  }, [agents, events, legacyStatus, loading]);
 }

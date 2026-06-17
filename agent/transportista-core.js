@@ -280,8 +280,8 @@ class TransportistaAgent extends EventEmitter {
       this.fileOffset = fs.statSync(this.chatlogPath).size;
     }
 
-    await this.writeStatus();
     this.running = true;
+    await this.writeStatus({ state: "running" });
     this.emit("status", this.getStatus("running"));
 
     this.heartbeatTimer = setInterval(() => {
