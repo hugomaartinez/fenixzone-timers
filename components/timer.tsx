@@ -15,8 +15,10 @@ import {
   MonitorStopIcon as StopIcon,
   RotateCcwIcon,
   BellIcon,
+  TimerIcon,
 } from "lucide-react";
 import { useFirebaseTimer } from "@/app/hooks/useFirebaseTimer";
+import { cn } from "@/lib/utils";
 
 interface TimerProps {
   title: string;
@@ -56,23 +58,44 @@ export default function Timer({ title, cityName, groupId }: TimerProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card
+      className={cn(
+        "overflow-hidden rounded-lg border-white/10 bg-card shadow-lg shadow-black/20 transition-colors",
+        isRunning ? "ring-1 ring-teal-400/40" : ""
+      )}
+    >
+      <CardHeader className="flex-row items-center justify-between space-y-0 border-b border-white/10 bg-white/[0.03] p-4">
+        <div>
+          <CardTitle className="text-base">{title}</CardTitle>
+          <p className="mt-1 text-xs text-muted-foreground">{cityName}</p>
+        </div>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs",
+            isRunning
+              ? "bg-teal-400/10 text-teal-300"
+              : "bg-muted text-muted-foreground"
+          )}
+        >
+          <TimerIcon className="h-3.5 w-3.5" />
+          {isRunning ? "Activo" : "Pausado"}
+        </span>
       </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-bold text-center">{formatTime(time)}</p>
-        <div className="flex items-center justify-center space-x-2 mt-4">
-          <BellIcon className="h-4 w-4" />
+      <CardContent className="p-5">
+        <p className="text-center font-mono text-4xl font-bold tabular-nums tracking-normal">
+          {formatTime(time)}
+        </p>
+        <div className="mt-5 flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-background px-3 py-2">
+          <BellIcon className="h-4 w-4 text-amber-300" />
           <Switch
             checked={alertEnabled}
             onCheckedChange={toggleAlert}
             aria-label="Activar alerta a los 35 minutos"
           />
-          <span className="text-sm">Alerta a los 35 min</span>
+          <span className="text-sm text-muted-foreground">Alerta a los 35 min</span>
         </div>
       </CardContent>
-      <CardFooter className="justify-center space-x-2">
+      <CardFooter className="justify-center gap-2 p-4 pt-0">
         <Button onClick={handleStart} disabled={isRunning}>
           <PlayIcon className="h-4 w-4 md:h-5 md:w-5" />
           <span className="hidden min-[1280px]:inline-block ml-2">Iniciar</span>

@@ -11,7 +11,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 import { useGroups } from "@/app/hooks/useGroups";
 
 export default function CitiesApp() {
-  const { user, loading: authLoading, login, register, logout } = useAuth();
+  const { user, profile, loading: authLoading, login, register, logout } = useAuth();
   const {
     groups,
     activeGroup,
@@ -20,7 +20,7 @@ export default function CitiesApp() {
     setActiveGroupId,
     createGroup,
     joinGroup,
-  } = useGroups(user);
+  } = useGroups(user, profile);
   const [inviteMessage, setInviteMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,7 +51,11 @@ export default function CitiesApp() {
   }, [joinGroup, user]);
 
   if (authLoading) {
-    return <main className="p-4 text-center text-muted-foreground">Cargando...</main>;
+    return (
+      <main className="min-h-screen bg-background p-4 text-center text-muted-foreground">
+        Cargando...
+      </main>
+    );
   }
 
   if (!user) {
@@ -59,9 +63,12 @@ export default function CitiesApp() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <main className="min-h-screen bg-[linear-gradient(180deg,_hsl(0_0%_3.9%),_hsl(220_18%_7%)_48%,_hsl(0_0%_3.9%))]">
+      <div className="container mx-auto max-w-6xl p-4">
       <GroupToolbar
         userEmail={user.email}
+        playerName={profile?.playerName ?? user.displayName}
+        server={profile?.server}
         groups={groups}
         activeGroup={activeGroup}
         onSelectGroup={setActiveGroupId}
@@ -77,28 +84,29 @@ export default function CitiesApp() {
         <p className="text-center text-muted-foreground">Cargando grupos...</p>
       ) : null}
       {!groupsLoading && !activeGroupId ? (
-        <p className="rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="rounded-lg border border-white/10 bg-card p-4 text-sm text-muted-foreground">
           Crea un grupo para empezar a guardar tiempos compartidos.
         </p>
       ) : null}
       {activeGroupId ? (
-      <Tabs defaultValue="los-santos">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="los-santos">Los Santos</TabsTrigger>
-          <TabsTrigger value="san-fierro">San Fierro</TabsTrigger>
-          <TabsTrigger value="las-venturas">Las Venturas</TabsTrigger>
-        </TabsList>
-        <TabsContent value="los-santos">
-          <LosSantos groupId={activeGroupId} />
-        </TabsContent>
-        <TabsContent value="san-fierro">
-          <SanFierro groupId={activeGroupId} />
-        </TabsContent>
-        <TabsContent value="las-venturas">
-          <LasVenturas groupId={activeGroupId} />
-        </TabsContent>
-      </Tabs>
+        <Tabs defaultValue="los-santos">
+          <TabsList className="grid w-full grid-cols-3 rounded-lg border border-white/10 bg-card p-1">
+            <TabsTrigger value="los-santos">Los Santos</TabsTrigger>
+            <TabsTrigger value="san-fierro">San Fierro</TabsTrigger>
+            <TabsTrigger value="las-venturas">Las Venturas</TabsTrigger>
+          </TabsList>
+          <TabsContent value="los-santos" className="mt-5">
+            <LosSantos groupId={activeGroupId} />
+          </TabsContent>
+          <TabsContent value="san-fierro" className="mt-5">
+            <SanFierro groupId={activeGroupId} />
+          </TabsContent>
+          <TabsContent value="las-venturas" className="mt-5">
+            <LasVenturas groupId={activeGroupId} />
+          </TabsContent>
+        </Tabs>
       ) : null}
-    </div>
+      </div>
+    </main>
   );
 }

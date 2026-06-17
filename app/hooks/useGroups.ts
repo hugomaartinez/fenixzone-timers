@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { User } from "firebase/auth";
 import { get, onValue, push, ref, set, update } from "firebase/database";
 import { database } from "@/app/firebase";
+import { UserProfile } from "@/app/hooks/useAuth";
 
 export interface GroupSummary {
   id: string;
@@ -11,7 +12,7 @@ export interface GroupSummary {
   role: "owner" | "member";
 }
 
-export function useGroups(user: User | null) {
+export function useGroups(user: User | null, profile: UserProfile | null) {
   const [groups, setGroups] = useState<GroupSummary[]>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,6 +83,8 @@ export function useGroups(user: User | null) {
         members: {
           [user.uid]: {
             email: user.email,
+            playerName: profile?.playerName ?? user.displayName ?? "",
+            server: profile?.server ?? "",
             role: "owner",
             joinedAt: now,
           },
@@ -95,7 +98,7 @@ export function useGroups(user: User | null) {
 
     setActiveGroupId(groupId);
     return groupId;
-  }, [user]);
+  }, [profile, user]);
 
   const joinGroup = useCallback(async (groupId: string) => {
     if (!user) {
@@ -103,10 +106,10 @@ export function useGroups(user: User | null) {
     }
 
     const trimmedGroupId = groupId.trim();
-    const groupSnapshot = await get(ref(database, `groups/${trimmedGroupId}`));
-    const group = groupSnapshot.val();
+    const groupNameSnapshot = await get(ref(database, `groups/${trimmedGroupId}/name`));
+    const groupName = groupNameSnapshot.val();
 
-    if (!group) {
+    if (!groupName) {
       throw new Error("El enlace de invitacion no pertenece a ningun grupo.");
     }
 
@@ -114,17 +117,19 @@ export function useGroups(user: User | null) {
     await update(ref(database), {
       [`groups/${trimmedGroupId}/members/${user.uid}`]: {
         email: user.email,
+        playerName: profile?.playerName ?? user.displayName ?? "",
+        server: profile?.server ?? "",
         role: "member",
         joinedAt: now,
       },
       [`userGroups/${user.uid}/${trimmedGroupId}`]: {
-        name: group.name,
+        name: groupName,
         role: "member",
       },
     });
 
     setActiveGroupId(trimmedGroupId);
-  }, [user]);
+  }, [profile, user]);
 
   const renameActiveGroup = useCallback(async (name: string) => {
     if (!user || !activeGroup) {

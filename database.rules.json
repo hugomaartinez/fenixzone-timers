@@ -6,18 +6,18 @@
         ".write": "auth != null && !data.exists() && newData.child('ownerId').val() == auth.uid && newData.child('members').child(auth.uid).child('role').val() == 'owner'",
         "name": {
           ".read": "auth != null",
-          ".write": "auth != null && data.parent().child('ownerId').val() == auth.uid"
+          ".write": "auth != null && (!data.exists() || data.parent().child('ownerId').val() == auth.uid)"
         },
         "ownerId": {
-          ".write": false
+          ".write": "auth != null && !data.exists() && newData.val() == auth.uid"
         },
         "createdAt": {
-          ".write": false
+          ".write": "auth != null && !data.exists() && newData.isNumber()"
         },
         "members": {
           "$uid": {
             ".write": "auth != null && auth.uid == $uid",
-            ".validate": "newData.hasChildren(['email', 'role', 'joinedAt']) && (newData.child('role').val() == 'member' || root.child('groups').child($groupId).child('ownerId').val() == auth.uid)"
+            ".validate": "newData.hasChildren(['email', 'role', 'joinedAt']) && (newData.child('role').val() == 'member' || (newData.child('role').val() == 'owner' && newData.parent().parent().child('ownerId').val() == auth.uid))"
           }
         },
         "timers": {
@@ -30,6 +30,13 @@
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
         ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid",
+        ".validate": "newData.hasChildren(['email', 'playerName', 'server'])"
       }
     }
   }
