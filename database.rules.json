@@ -25,8 +25,22 @@
           ".write": "auth != null && data.parent().child('members').child(auth.uid).exists()"
         },
         "transportista": {
-          ".read": "auth != null && data.parent().child('members').child(auth.uid).exists()",
-          ".write": "auth != null && data.parent().child('members').child(auth.uid).exists()"
+          ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
+          ".write": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
+          "events": {
+            ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
+            ".write": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()"
+          },
+          "agents": {
+            "$agentId": {
+              ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
+              ".write": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()"
+            }
+          },
+          "status": {
+            ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
+            ".write": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()"
+          }
         }
       }
     },
