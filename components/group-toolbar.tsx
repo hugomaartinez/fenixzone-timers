@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import {
   CopyIcon,
   Gamepad2Icon,
+  ChevronDownIcon,
   LogOutIcon,
   PlusIcon,
   ServerIcon,
@@ -124,19 +125,22 @@ export default function GroupToolbar({
       </div>
       <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <select
-            className="h-9 min-w-48 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            value={activeGroup?.id ?? ""}
-            onChange={(event) => onSelectGroup(event.target.value)}
-            disabled={groups.length === 0}
-          >
-            {groups.length === 0 ? <option value="">Sin grupos</option> : null}
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
-            ))}
-          </select>
+          <label className="relative inline-flex min-w-48 items-center">
+            <select
+              className="h-9 w-full appearance-none rounded-md border border-input bg-background px-3 pr-10 text-sm outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring"
+              value={activeGroup?.id ?? ""}
+              onChange={(event) => onSelectGroup(event.target.value)}
+              disabled={groups.length === 0}
+            >
+              {groups.length === 0 ? <option value="">Sin grupos</option> : null}
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDownIcon className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
+          </label>
           <Button
             type="button"
             variant="outline"

@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  BellIcon,
+  Clock3Icon,
+  Edit3Icon,
+  MonitorStopIcon as StopIcon,
+  PlayIcon,
+  RotateCcwIcon,
+  TimerIcon,
+  SaveIcon,
+} from "lucide-react";
+import { useFirebaseTimer } from "@/app/hooks/useFirebaseTimer";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  PlayIcon,
-  MonitorStopIcon as StopIcon,
-  RotateCcwIcon,
-  BellIcon,
-  TimerIcon,
-} from "lucide-react";
-import { useFirebaseTimer } from "@/app/hooks/useFirebaseTimer";
 import { cn } from "@/lib/utils";
 
 interface TimerProps {
@@ -32,11 +35,15 @@ export default function Timer({ title, cityName, groupId }: TimerProps) {
     isRunning,
     alertEnabled,
     handleStart,
+    handleStartFrom,
     handleStop,
     handleReset,
+    handleSetTime,
     toggleAlert,
   } = useFirebaseTimer(groupId, cityName, title);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftMinutes, setDraftMinutes] = useState("");
 
   useEffect(() => {
     audioRef.current = new Audio("/notification_sound.wav");
@@ -48,6 +55,12 @@ export default function Timer({ title, cityName, groupId }: TimerProps) {
     }
   }, [time, alertEnabled]);
 
+  useEffect(() => {
+    if (isEditing) {
+      setDraftMinutes(String(Math.floor(time / 60)));
+    }
+  }, [isEditing, time]);
+
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -55,6 +68,25 @@ export default function Timer({ title, cityName, groupId }: TimerProps) {
     return `${hours.toString().padStart(2, "0")}:${minutes
       .toString()
       .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
+  const editableSeconds = useMemo(() => {
+    const minutes = Number(draftMinutes);
+    if (Number.isNaN(minutes) || minutes < 0) {
+      return 0;
+    }
+
+    return Math.floor(minutes * 60);
+  }, [draftMinutes]);
+
+  const applyTime = () => {
+    handleSetTime(editableSeconds);
+    setIsEditing(false);
+  };
+
+  const startFromEditedTime = () => {
+    handleStartFrom(editableSeconds);
+    setIsEditing(false);
   };
 
   return (
@@ -94,21 +126,63 @@ export default function Timer({ title, cityName, groupId }: TimerProps) {
           />
           <span className="text-sm text-muted-foreground">Alerta a los 35 min</span>
         </div>
+
+        <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock3Icon className="h-4 w-4" />
+              Ajustar tiempo
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing((value) => !value)}
+            >
+              <Edit3Icon className="h-4 w-4" />
+              {isEditing ? "Cerrar" : "Editar"}
+            </Button>
+          </div>
+
+          {isEditing ? (
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="flex-1 space-y-1 text-sm">
+                <span className="text-muted-foreground">Minutos</span>
+                <input
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={draftMinutes}
+                  onChange={(event) => setDraftMinutes(event.target.value)}
+                />
+              </label>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={applyTime}>
+                  <SaveIcon className="h-4 w-4" />
+                  Aplicar
+                </Button>
+                <Button type="button" onClick={startFromEditedTime}>
+                  <PlayIcon className="h-4 w-4" />
+                  Iniciar
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </CardContent>
       <CardFooter className="justify-center gap-2 p-4 pt-0">
         <Button onClick={handleStart} disabled={isRunning}>
           <PlayIcon className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="hidden min-[1280px]:inline-block ml-2">Iniciar</span>
+          <span className="ml-2 hidden min-[1280px]:inline-block">Iniciar</span>
         </Button>
         <Button onClick={handleStop} disabled={!isRunning}>
           <StopIcon className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="hidden min-[1280px]:inline-block ml-2">Parar</span>
+          <span className="ml-2 hidden min-[1280px]:inline-block">Parar</span>
         </Button>
         <Button onClick={handleReset} variant="outline">
           <RotateCcwIcon className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="hidden min-[1280px]:inline-block ml-2">
-            Reiniciar
-          </span>
+          <span className="ml-2 hidden min-[1280px]:inline-block">Reiniciar</span>
         </Button>
       </CardFooter>
     </Card>

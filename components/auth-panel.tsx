@@ -2,16 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import {
+  ChevronDownIcon,
   Gamepad2Icon,
   LockIcon,
   LogInIcon,
   MailIcon,
   ServerIcon,
-  ShieldCheckIcon,
-  TimerResetIcon,
   UserIcon,
   UserPlusIcon,
-  UsersIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,50 +69,21 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.14),_transparent_32%),linear-gradient(135deg,_hsl(0_0%_3.9%),_hsl(220_18%_8%)_52%,_hsl(0_0%_3.9%))] p-4">
-      <div className="grid w-full max-w-5xl gap-5 lg:grid-cols-[1fr_420px] lg:items-center">
-        <section className="space-y-5">
+      <div className="grid w-full max-w-4xl gap-5 lg:grid-cols-[1fr_420px] lg:items-center">
+        <section className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
-            {isRegister ? (
-              <Gamepad2Icon className="h-4 w-4 text-amber-300" />
-            ) : (
-              <TimerResetIcon className="h-4 w-4 text-teal-300" />
-            )}
-            {isRegister
-              ? "Registro con perfil de jugador"
-              : "Casas de robo sincronizadas por grupo"}
+            <Gamepad2Icon className="h-4 w-4 text-teal-300" />
+            Registro y acceso para tus tiempos compartidos
           </div>
-          <div className="space-y-3">
-            <h1 className="max-w-2xl text-4xl font-bold leading-tight sm:text-5xl">
-              {isRegister ? "Crea tu perfil FenixZone" : "FenixZone Timers"}
+          <div className="space-y-2">
+            <h1 className="max-w-xl text-4xl font-bold leading-tight sm:text-5xl">
+              {isRegister ? "Crear cuenta" : "Entrar"}
             </h1>
-            <p className="max-w-xl text-base text-muted-foreground">
+            <p className="max-w-xl text-sm text-muted-foreground">
               {isRegister
-                ? "Tu nick y servidor ayudan a identificar quien esta en cada grupo compartido."
-                : "Controla los tiempos con tu crew, acepta invitaciones y manten cada servidor separado."}
+                ? "Aquí solo pedimos lo necesario: email, contraseña, nick y servidor."
+                : "Usa tu cuenta para abrir tus grupos y timers."}
             </p>
-          </div>
-          <div className="grid max-w-2xl gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-              <UsersIcon className="mb-3 h-5 w-5 text-teal-300" />
-              <p className="text-sm font-medium">Grupos privados</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Comparte solo con tu gente.
-              </p>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-              <ShieldCheckIcon className="mb-3 h-5 w-5 text-emerald-300" />
-              <p className="text-sm font-medium">Invitaciones</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Un enlace y estan dentro.
-              </p>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-              <Gamepad2Icon className="mb-3 h-5 w-5 text-amber-300" />
-              <p className="text-sm font-medium">Perfil FenixZone</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Nick y servidor visibles.
-              </p>
-            </div>
           </div>
         </section>
 
@@ -168,11 +137,11 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
                 </span>
               </label>
 
-              {isRegister ? (
-                <div className="space-y-4 rounded-lg border border-amber-300/20 bg-amber-300/[0.04] p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Gamepad2Icon className="h-4 w-4 text-amber-300" />
-                    Perfil dentro del juego
+            {isRegister ? (
+              <div className="space-y-4 rounded-lg border border-amber-300/20 bg-amber-300/[0.04] p-4">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Gamepad2Icon className="h-4 w-4 text-amber-300" />
+                  Perfil dentro del juego
                   </div>
                   <label className="block space-y-2 text-sm font-medium">
                     <span>Nombre dentro del juego</span>
@@ -191,10 +160,10 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
                   </label>
                   <label className="block space-y-2 text-sm font-medium">
                     <span>Servidor de FenixZone</span>
-                    <span className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
+                    <span className="relative flex items-center rounded-md border border-input bg-background px-3 py-2 pr-10">
                       <ServerIcon className="h-4 w-4 text-muted-foreground" />
                       <select
-                        className="w-full bg-transparent outline-none"
+                        className="w-full appearance-none bg-transparent pr-2 outline-none"
                         value={server}
                         onChange={(event) => setServer(event.target.value)}
                         required
@@ -203,8 +172,9 @@ export default function AuthPanel({ onLogin, onRegister }: AuthPanelProps) {
                         <option>Roleplay 2</option>
                         <option>Roleplay 3</option>
                         <option>Roleplay 4</option>
-                        <option>DM / Freeroam</option>
+                          <option>DM / Freeroam</option>
                       </select>
+                      <ChevronDownIcon className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
                     </span>
                   </label>
                 </div>

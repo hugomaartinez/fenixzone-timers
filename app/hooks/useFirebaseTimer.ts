@@ -74,6 +74,12 @@ export function useFirebaseTimer(groupId: string, cityName: string, timerName: s
     updateTimerData({ isRunning: true, startTime });
   };
 
+  const handleStartFrom = (timeInSeconds: number) => {
+    const safeTime = Math.max(0, Math.floor(timeInSeconds));
+    const startTime = Date.now() - safeTime * 1000;
+    updateTimerData({ time: safeTime, isRunning: true, startTime });
+  };
+
   const handleStop = () => {
     // Detener el temporizador en Firebase
     updateTimerData({ isRunning: false });
@@ -84,14 +90,20 @@ export function useFirebaseTimer(groupId: string, cityName: string, timerName: s
 
   const handleReset = () =>
     updateTimerData({ time: 0, isRunning: false, startTime: undefined });
+  const handleSetTime = (timeInSeconds: number) => {
+    const safeTime = Math.max(0, Math.floor(timeInSeconds));
+    updateTimerData({ time: safeTime, isRunning: false, startTime: undefined });
+  };
   const toggleAlert = () =>
     updateTimerData({ alertEnabled: !timerData.alertEnabled });
 
   return {
     ...timerData,
     handleStart,
+    handleStartFrom,
     handleStop,
     handleReset,
+    handleSetTime,
     toggleAlert,
   };
 }
