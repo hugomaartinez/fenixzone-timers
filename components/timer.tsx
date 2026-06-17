@@ -145,11 +145,11 @@ export default function Timer({ title, cityName, groupId }: TimerProps) {
           </div>
 
           {isEditing ? (
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <label className="flex-1 space-y-1 text-sm">
+            <div className="mt-3 grid gap-3">
+              <label className="grid gap-1 text-sm">
                 <span className="text-muted-foreground">Minutos</span>
                 <input
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   type="number"
                   min="0"
                   step="1"
@@ -157,12 +157,21 @@ export default function Timer({ title, cityName, groupId }: TimerProps) {
                   onChange={(event) => setDraftMinutes(event.target.value)}
                 />
               </label>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={applyTime}>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  className="h-9 px-3"
+                  type="button"
+                  variant="outline"
+                  onClick={applyTime}
+                >
                   <SaveIcon className="h-4 w-4" />
                   Aplicar
                 </Button>
-                <Button type="button" onClick={startFromEditedTime}>
+                <Button
+                  className="h-9 px-3"
+                  type="button"
+                  onClick={startFromEditedTime}
+                >
                   <PlayIcon className="h-4 w-4" />
                   Iniciar
                 </Button>
