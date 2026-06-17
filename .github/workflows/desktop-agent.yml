@@ -6,6 +6,9 @@ on:
       - master
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows-exe:
     name: Build Windows executable
@@ -49,3 +52,15 @@ jobs:
           path: dist/Transportista-Agent.exe
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish latest release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: Última versión
+          body: Transportista Agent compilado automáticamente desde master.
+          artifacts: dist/Transportista-Agent.exe
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true
+          token: ${{ secrets.GITHUB_TOKEN }}
