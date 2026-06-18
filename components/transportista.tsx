@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import TransportistaStats from "@/components/transportista-stats";
 
 interface TransportistaProps {
   groupId: string;
@@ -54,6 +55,7 @@ export default function Transportista({ groupId }: TransportistaProps) {
     loading,
     nextCallAt,
     realisticIntervalsCount,
+    trips,
   } = useTransportista(groupId);
 
   useEffect(() => {
@@ -177,6 +179,8 @@ export default function Transportista({ groupId }: TransportistaProps) {
           ) : null}
         </CardContent>
       </Card>
+
+      <TransportistaStats trips={trips} />
 
       <Card className="overflow-hidden rounded-lg border-white/10 bg-card shadow-lg shadow-black/20 lg:col-span-2">
         <CardHeader className="border-b border-white/10 bg-white/[0.03] p-4">

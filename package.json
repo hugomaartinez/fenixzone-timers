@@ -11,6 +11,7 @@
     "transportista:desktop:build": "powershell -NoProfile -ExecutionPolicy Bypass -File agent/build-desktop.ps1",
     "transportista:agent": "node agent/transportista-agent.js",
     "start": "next start",
+    "test": "node --test agent/*.test.js",
     "lint": "next lint"
   },
   "build": {
@@ -18,6 +19,7 @@
     "productName": "Transportista Agent",
     "files": [
       "agent/**/*",
+      "!agent/**/*.test.js",
       "package.json"
     ],
     "win": {

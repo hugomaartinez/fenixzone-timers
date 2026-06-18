@@ -23,6 +23,7 @@ Transportista calls are stored under:
 ```text
 groups/{groupId}/transportista/events
 groups/{groupId}/transportista/agents
+groups/{groupId}/transportista/trips
 ```
 
 ## Transportista Agent
@@ -69,6 +70,8 @@ fallbackIntervalMs = 306000  # 5:06 from the old transportista.ini
 ```
 
 Each desktop agent writes its own heartbeat under `transportista/agents`, so the web can show how many PCs are online. Calls are saved with a deterministic ID based on the chatlog timestamp, so if several agents detect the same call they update the same event instead of creating duplicates.
+
+Completed routes are stored under `transportista/trips`. The agent links the assigned origin, loading destination and completion message from the chatlog. Route statistics only include trips completed in 10 minutes or less.
 
 Intervals outside that window are discarded and only reflected in the agent status as the last rejected detection.
 

@@ -6,6 +6,7 @@ const { EventEmitter } = require("events");
 const DEFAULT_MIN_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
 const DEFAULT_MAX_INTERVAL_MS = 5 * 60 * 1000 + 25 * 1000;
 const DEFAULT_FALLBACK_INTERVAL_MS = 306000;
+const MAX_VALID_TRIP_DURATION_MS = 10 * 60 * 1000;
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -82,6 +83,42 @@ function normalizeLine(line) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function cleanChatlogLine(line) {
+  return line.replace(/\{[0-9a-fA-F]{6}\}/g, "").trim();
+}
+
+function cleanLocation(value) {
+  const location = value
+    .replace(/[?.!,]+$/g, "")
+    .replace(/^(?:a|en)\s+(?:el|la|los|las|un|una)\s+/i, "")
+    .replace(/^(?:el|la|los|las|un|una)\s+/i, "")
+    .trim();
+
+  return location ? location.charAt(0).toUpperCase() + location.slice(1) : null;
+}
+
+function parseTripOrigin(line) {
+  const cleanLine = cleanChatlogLine(line);
+  const match = cleanLine.match(
+    /empresa de transporte\(por celular\):.*buscar una carga\s+(a\s+.+?)\??$/i
+  );
+  return match ? cleanLocation(match[1]) : null;
+}
+
+function parseTripDestination(line) {
+  const cleanLine = cleanChatlogLine(line);
+  const match = cleanLine.match(/entrega la carga\s+(en\s+.+?)\.?$/i);
+  return match ? cleanLocation(match[1]) : null;
+}
+
+function isTripCompletion(line) {
+  const normalizedLine = normalizeLine(line);
+  return (
+    normalizedLine.includes("habilidad de transportista") &&
+    normalizedLine.includes("aumentada")
+  );
 }
 
 function isTransportistaCall(line) {
@@ -222,6 +259,8 @@ class TransportistaAgent extends EventEmitter {
     this.pollTimer = null;
     this.heartbeatTimer = null;
     this.running = false;
+    this.lineBuffer = "";
+    this.activeTrip = null;
     this.chatlogPath = resolveChatlogPath(config.chatlogPath);
   }
 
@@ -381,13 +420,67 @@ class TransportistaAgent extends EventEmitter {
     this.emit("rejected", { calledAt, intervalMs, reason });
   }
 
+  async saveCompletedTrip(completedAt) {
+    if (!this.activeTrip?.origin || !this.activeTrip.destination) {
+      return;
+    }
+
+    const settings = this.getSettings();
+    const trip = this.activeTrip;
+    this.activeTrip = null;
+    const durationMs = completedAt - trip.startedAt;
+    if (durationMs <= 0) {
+      return;
+    }
+
+    const tripId = `${settings.agentId}_${Math.floor(trip.startedAt / 1000)}`;
+    await firebaseRequest(
+      settings.databaseURL,
+      this.idToken,
+      "PUT",
+      `groups/${settings.groupId}/transportista/trips/${tripId}`,
+      {
+        agentId: settings.agentId,
+        agentName: settings.agentName,
+        completedAt,
+        destination: trip.destination,
+        durationMs,
+        loadedAt: trip.loadedAt,
+        origin: trip.origin,
+        source: "chatlog",
+        startedAt: trip.startedAt,
+        validDuration: durationMs <= MAX_VALID_TRIP_DURATION_MS,
+      }
+    );
+    this.emit("trip-completed", { ...trip, completedAt, durationMs, tripId });
+  }
+
   async processLine(line) {
+    const timestamp = parseChatlogTimestamp(line) ?? Date.now();
+    const origin = parseTripOrigin(line);
+    if (origin) {
+      this.activeTrip = { destination: null, loadedAt: null, origin, startedAt: timestamp };
+      return;
+    }
+
+    const destination = parseTripDestination(line);
+    if (destination && this.activeTrip) {
+      this.activeTrip.destination = destination;
+      this.activeTrip.loadedAt = timestamp;
+      return;
+    }
+
+    if (isTripCompletion(line)) {
+      await this.saveCompletedTrip(timestamp);
+      return;
+    }
+
     if (!isTransportistaCall(line)) {
       return;
     }
 
     const settings = this.getSettings();
-    const calledAt = parseChatlogTimestamp(line) ?? Date.now();
+    const calledAt = timestamp;
     const intervalMs = this.lastAcceptedCallAt ? calledAt - this.lastAcceptedCallAt : null;
 
     if (
@@ -422,7 +515,7 @@ class TransportistaAgent extends EventEmitter {
     }
 
     const stream = fs.createReadStream(this.chatlogPath, {
-      encoding: "utf8",
+      encoding: "latin1",
       start: this.fileOffset,
       end: stats.size - 1,
     });
@@ -433,7 +526,10 @@ class TransportistaAgent extends EventEmitter {
     }
 
     this.fileOffset = stats.size;
-    const lines = chunk.split(/\r?\n/).filter(Boolean);
+    const completeText = this.lineBuffer + chunk;
+    const parts = completeText.split(/\r?\n/);
+    this.lineBuffer = parts.pop() ?? "";
+    const lines = parts.filter(Boolean);
 
     for (const line of lines) {
       await this.processLine(line);
@@ -453,13 +549,17 @@ module.exports = {
   DEFAULT_FALLBACK_INTERVAL_MS,
   DEFAULT_MAX_INTERVAL_MS,
   DEFAULT_MIN_INTERVAL_MS,
+  MAX_VALID_TRIP_DURATION_MS,
   TransportistaAgent,
   createCallEventId,
   getDocumentsCandidates,
   isTransportistaCall,
+  isTripCompletion,
   loadUserGroups,
   loadConfig,
   parseChatlogTimestamp,
+  parseTripDestination,
+  parseTripOrigin,
   readJson,
   resolveChatlogPath,
 };

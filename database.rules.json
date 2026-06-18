@@ -31,6 +31,10 @@
             ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
             ".write": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()"
           },
+          "trips": {
+            ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
+            ".write": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()"
+          },
           "agents": {
             "$agentId": {
               ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",

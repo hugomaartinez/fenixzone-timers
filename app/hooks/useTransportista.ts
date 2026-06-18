@@ -28,6 +28,20 @@ export interface TransportistaAgentStatus {
   state?: string;
 }
 
+export interface TransportistaTrip {
+  id: string;
+  agentId?: string;
+  agentName?: string;
+  completedAt: number;
+  destination: string;
+  durationMs: number;
+  loadedAt?: number;
+  origin: string;
+  source?: string;
+  startedAt: number;
+  validDuration?: boolean;
+}
+
 const MIN_REAL_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
 const MAX_REAL_INTERVAL_MS = 5 * 60 * 1000 + 25 * 1000;
 const FALLBACK_INTERVAL_MS = 306000;
@@ -47,6 +61,7 @@ function average(values: number[]) {
 export function useTransportista(groupId: string) {
   const [events, setEvents] = useState<TransportistaEvent[]>([]);
   const [agents, setAgents] = useState<TransportistaAgentStatus[]>([]);
+  const [trips, setTrips] = useState<TransportistaTrip[]>([]);
   const [legacyStatus, setLegacyStatus] = useState<TransportistaAgentStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -66,6 +81,31 @@ export function useTransportista(groupId: string) {
 
       setEvents(nextEvents);
       setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [groupId]);
+
+  useEffect(() => {
+    const tripsRef = ref(database, `groups/${groupId}/transportista/trips`);
+
+    const unsubscribe = onValue(tripsRef, (snapshot) => {
+      const rawTrips = snapshot.val() ?? {};
+      const nextTrips = Object.entries(rawTrips)
+        .map(([id, value]) => ({
+          id,
+          ...(value as Omit<TransportistaTrip, "id">),
+        }))
+        .filter(
+          (trip) =>
+            typeof trip.startedAt === "number" &&
+            typeof trip.durationMs === "number" &&
+            typeof trip.origin === "string" &&
+            typeof trip.destination === "string"
+        )
+        .sort((a, b) => a.startedAt - b.startedAt);
+
+      setTrips(nextTrips);
     });
 
     return () => unsubscribe();
@@ -132,6 +172,7 @@ export function useTransportista(groupId: string) {
       nextCallAt: lastEvent ? lastEvent.calledAt + averageIntervalMs : null,
       realisticIntervalsCount: intervals.length,
       status: visibleAgents[0] ?? null,
+      trips,
     };
-  }, [agents, events, legacyStatus, loading]);
+  }, [agents, events, legacyStatus, loading, trips]);
 }
