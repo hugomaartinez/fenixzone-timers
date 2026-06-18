@@ -190,7 +190,11 @@ async function firebaseRequest(databaseURL, idToken, method, firebasePath, body)
   });
 
   if (!response.ok) {
-    throw new Error(`Firebase ${method} ${firebasePath} failed: ${response.status} ${await response.text()}`);
+    const error = new Error(
+      `Firebase ${method} ${firebasePath} failed: ${response.status} ${await response.text()}`
+    );
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();
@@ -258,6 +262,8 @@ class TransportistaAgent extends EventEmitter {
     this.fileOffset = 0;
     this.pollTimer = null;
     this.heartbeatTimer = null;
+    this.tokenRefreshTimer = null;
+    this.authPromise = null;
     this.running = false;
     this.lineBuffer = "";
     this.activeTrip = null;
@@ -294,6 +300,55 @@ class TransportistaAgent extends EventEmitter {
     }
   }
 
+  async authenticate() {
+    if (this.authPromise) {
+      return this.authPromise;
+    }
+
+    const settings = this.getSettings();
+    this.authPromise = signIn(
+      settings.apiKey,
+      this.config.auth.email,
+      this.config.auth.password
+    )
+      .then((session) => {
+        this.idToken = session.idToken;
+        return session;
+      })
+      .finally(() => {
+        this.authPromise = null;
+      });
+
+    return this.authPromise;
+  }
+
+  async request(method, firebasePath, body) {
+    const settings = this.getSettings();
+
+    try {
+      return await firebaseRequest(
+        settings.databaseURL,
+        this.idToken,
+        method,
+        firebasePath,
+        body
+      );
+    } catch (error) {
+      if (error.status !== 401) {
+        throw error;
+      }
+
+      await this.authenticate();
+      return firebaseRequest(
+        settings.databaseURL,
+        this.idToken,
+        method,
+        firebasePath,
+        body
+      );
+    }
+  }
+
   async start() {
     if (this.running) {
       return;
@@ -301,12 +356,7 @@ class TransportistaAgent extends EventEmitter {
 
     this.validateConfig();
     const settings = this.getSettings();
-    const session = await signIn(
-      settings.apiKey,
-      this.config.auth.email,
-      this.config.auth.password
-    );
-    this.idToken = session.idToken;
+    await this.authenticate();
 
     const lastAcceptedEvent = await loadLastAcceptedCall(
       settings.databaseURL,
@@ -327,6 +377,10 @@ class TransportistaAgent extends EventEmitter {
       this.writeStatus().catch((error) => this.emitError(error));
     }, settings.heartbeatIntervalMs);
 
+    this.tokenRefreshTimer = setInterval(() => {
+      this.authenticate().catch((error) => this.emitError(error));
+    }, 50 * 60 * 1000);
+
     this.pollTimer = setInterval(() => {
       this.readNewLines().catch((error) => this.emitError(error));
     }, settings.pollIntervalMs);
@@ -341,8 +395,13 @@ class TransportistaAgent extends EventEmitter {
       clearInterval(this.heartbeatTimer);
     }
 
+    if (this.tokenRefreshTimer) {
+      clearInterval(this.tokenRefreshTimer);
+    }
+
     this.pollTimer = null;
     this.heartbeatTimer = null;
+    this.tokenRefreshTimer = null;
     this.running = false;
     if (this.idToken && this.getSettings().groupId) {
       this.writeStatus({ running: false, state: "stopped", stoppedAt: Date.now() }).catch((error) => {
@@ -363,9 +422,7 @@ class TransportistaAgent extends EventEmitter {
 
   async writeStatus(extra = {}) {
     const settings = this.getSettings();
-    await firebaseRequest(
-      settings.databaseURL,
-      this.idToken,
+    await this.request(
       "PATCH",
       `groups/${settings.groupId}/transportista/agents/${settings.agentId}`,
       {
@@ -386,9 +443,7 @@ class TransportistaAgent extends EventEmitter {
   async acceptCall(line, calledAt, intervalMs) {
     const settings = this.getSettings();
     const eventId = createCallEventId(calledAt);
-    await firebaseRequest(
-      settings.databaseURL,
-      this.idToken,
+    await this.request(
       "PATCH",
       `groups/${settings.groupId}/transportista/events/${eventId}`,
       {
@@ -431,9 +486,7 @@ class TransportistaAgent extends EventEmitter {
       tripId,
     };
 
-    await firebaseRequest(
-      settings.databaseURL,
-      this.idToken,
+    await this.request(
       "PUT",
       `groups/${settings.groupId}/transportista/trips/${tripId}`,
       {
@@ -456,9 +509,7 @@ class TransportistaAgent extends EventEmitter {
     const settings = this.getSettings();
     this.activeTrip.destination = destination;
     this.activeTrip.loadedAt = loadedAt;
-    await firebaseRequest(
-      settings.databaseURL,
-      this.idToken,
+    await this.request(
       "PATCH",
       `groups/${settings.groupId}/transportista/trips/${this.activeTrip.tripId}`,
       { destination, loadedAt, status: "in-progress" }
@@ -478,9 +529,7 @@ class TransportistaAgent extends EventEmitter {
       return;
     }
 
-    await firebaseRequest(
-      settings.databaseURL,
-      this.idToken,
+    await this.request(
       "PATCH",
       `groups/${settings.groupId}/transportista/trips/${trip.tripId}`,
       {

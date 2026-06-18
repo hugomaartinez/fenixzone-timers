@@ -5,6 +5,7 @@ const {
   MAX_VALID_TRIP_DURATION_MS,
   parseTripDestination,
   parseTripOrigin,
+  TransportistaAgent,
 } = require("./transportista-core");
 
 test("limits valid route durations to ten minutes", () => {
@@ -34,4 +35,45 @@ test("detects the completion message with or without accents", () => {
     isTripCompletion("[22:20:31] Habilidad de transportista aumentada +1 punto."),
     true
   );
+});
+
+test("renews an expired Firebase session and retries the request", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (url, options) => {
+    calls.push({ url, options });
+
+    if (calls.length === 1) {
+      return new Response('{ "error": "Permission denied" }', { status: 401 });
+    }
+
+    if (calls.length === 2) {
+      return Response.json({ idToken: "renewed-token", localId: "user-id" });
+    }
+
+    return Response.json({ ok: true });
+  };
+
+  try {
+    const agent = new TransportistaAgent({
+      auth: { email: "user@example.com", password: "secret" },
+      firebase: {
+        apiKey: "api-key",
+        databaseURL: "https://example.firebaseio.com",
+      },
+      groupId: "group-id",
+    });
+    agent.idToken = "expired-token";
+
+    await agent.request("PUT", "groups/group-id/transportista/trips/trip-id", {
+      origin: "Bayside",
+    });
+
+    assert.equal(calls.length, 3);
+    assert.match(calls[0].url, /auth=expired-token/);
+    assert.match(calls[1].url, /signInWithPassword/);
+    assert.match(calls[2].url, /auth=renewed-token/);
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
