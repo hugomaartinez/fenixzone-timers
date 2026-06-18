@@ -32,13 +32,14 @@ export interface TransportistaTrip {
   id: string;
   agentId?: string;
   agentName?: string;
-  completedAt: number;
-  destination: string;
-  durationMs: number;
+  completedAt?: number;
+  destination?: string;
+  durationMs?: number;
   loadedAt?: number;
   origin: string;
   source?: string;
   startedAt: number;
+  status?: "assigned" | "in-progress" | "completed";
   validDuration?: boolean;
 }
 
@@ -99,9 +100,7 @@ export function useTransportista(groupId: string) {
         .filter(
           (trip) =>
             typeof trip.startedAt === "number" &&
-            typeof trip.durationMs === "number" &&
-            typeof trip.origin === "string" &&
-            typeof trip.destination === "string"
+            typeof trip.origin === "string"
         )
         .sort((a, b) => a.startedAt - b.startedAt);
 

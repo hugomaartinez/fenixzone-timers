@@ -420,8 +420,53 @@ class TransportistaAgent extends EventEmitter {
     this.emit("rejected", { calledAt, intervalMs, reason });
   }
 
+  async startTrip(origin, startedAt) {
+    const settings = this.getSettings();
+    const tripId = `${settings.agentId}_${Math.floor(startedAt / 1000)}`;
+    this.activeTrip = {
+      destination: null,
+      loadedAt: null,
+      origin,
+      startedAt,
+      tripId,
+    };
+
+    await firebaseRequest(
+      settings.databaseURL,
+      this.idToken,
+      "PUT",
+      `groups/${settings.groupId}/transportista/trips/${tripId}`,
+      {
+        agentId: settings.agentId,
+        agentName: settings.agentName,
+        origin,
+        source: "chatlog",
+        startedAt,
+        status: "assigned",
+      }
+    );
+    this.emit("trip-assigned", { origin, startedAt, tripId });
+  }
+
+  async updateTripDestination(destination, loadedAt) {
+    if (!this.activeTrip) {
+      return;
+    }
+
+    const settings = this.getSettings();
+    this.activeTrip.destination = destination;
+    this.activeTrip.loadedAt = loadedAt;
+    await firebaseRequest(
+      settings.databaseURL,
+      this.idToken,
+      "PATCH",
+      `groups/${settings.groupId}/transportista/trips/${this.activeTrip.tripId}`,
+      { destination, loadedAt, status: "in-progress" }
+    );
+  }
+
   async saveCompletedTrip(completedAt) {
-    if (!this.activeTrip?.origin || !this.activeTrip.destination) {
+    if (!this.activeTrip?.origin) {
       return;
     }
 
@@ -433,40 +478,32 @@ class TransportistaAgent extends EventEmitter {
       return;
     }
 
-    const tripId = `${settings.agentId}_${Math.floor(trip.startedAt / 1000)}`;
     await firebaseRequest(
       settings.databaseURL,
       this.idToken,
-      "PUT",
-      `groups/${settings.groupId}/transportista/trips/${tripId}`,
+      "PATCH",
+      `groups/${settings.groupId}/transportista/trips/${trip.tripId}`,
       {
-        agentId: settings.agentId,
-        agentName: settings.agentName,
         completedAt,
-        destination: trip.destination,
         durationMs,
-        loadedAt: trip.loadedAt,
-        origin: trip.origin,
-        source: "chatlog",
-        startedAt: trip.startedAt,
+        status: "completed",
         validDuration: durationMs <= MAX_VALID_TRIP_DURATION_MS,
       }
     );
-    this.emit("trip-completed", { ...trip, completedAt, durationMs, tripId });
+    this.emit("trip-completed", { ...trip, completedAt, durationMs });
   }
 
   async processLine(line) {
     const timestamp = parseChatlogTimestamp(line) ?? Date.now();
     const origin = parseTripOrigin(line);
     if (origin) {
-      this.activeTrip = { destination: null, loadedAt: null, origin, startedAt: timestamp };
+      await this.startTrip(origin, timestamp);
       return;
     }
 
     const destination = parseTripDestination(line);
     if (destination && this.activeTrip) {
-      this.activeTrip.destination = destination;
-      this.activeTrip.loadedAt = timestamp;
+      await this.updateTripDestination(destination, timestamp);
       return;
     }
 
